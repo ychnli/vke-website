@@ -1,0 +1,29 @@
+---
+// An xarray Dataset as Jupyter shows it (sections expand on click; no JavaScript).
+// Save the HTML with `open('x.html', 'w').write(ds._repr_html_())` into src/data/:
+//   <DatasetRepr html={reprHtml} label="Output" />
+// The site is light-only, so xarray's dark-theme overrides are dropped.
+interface Props {
+  html: string;
+  label?: string;
+}
+const { html, label } = Astro.props;
+const light = html.replace(/html\[theme="dark"\][^{}]*\{[^{}]*\}/, '');
+---
+
+<figure class="dataset-repr">
+  {label && <figcaption>{label}</figcaption>}
+  <div class="dataset-repr-body" set:html={light} />
+</figure>
+
+<style>
+  .dataset-repr { margin: 0.75rem 0 1.75rem; }
+  .dataset-repr figcaption {
+    font-family: var(--sans); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem;
+  }
+  .dataset-repr-body {
+    overflow-x: auto; padding: 0.6rem 0.8rem; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--bg); font-family: var(--sans); font-size: 0.8rem; line-height: 1.4;
+  }
+</style>

@@ -8,6 +8,8 @@ import Derivation from '../components/Derivation.astro';
 import Term from '../components/Term.astro';
 import TermPanels from '../components/TermPanels.astro';
 import LandfallFigure from '../components/LandfallFigure.astro';
+import DatasetRepr from '../components/DatasetRepr.astro';
+import kevBudgetRepr from '../data/kev_budget_repr.html?raw';
 
 <Base title={frontmatter.title}>
 
@@ -238,6 +240,25 @@ track a small contribution from data-assimilation increments.
 ## Code
 
 We are developing an open-source Python package for these diagnostics, [vke-budgets](https://github.com/ychnli/vke-budgets). It takes the winds, humidity, geopotential and surface pressure from a reanalysis and computes every term of the column-integrated KEV and VTE budgets on its grid. It currently reads MERRA-2, whose physics tendencies give the vapor sources/sinks and turbulence terms directly. Support for ERA5 is forthcoming.
+
+For example, the KEV budget of one day of MERRA-2 over the northeast Pacific:
+
+```python
+from vke_budgets import budget
+from vke_budgets.sources import merra2
+
+# The MERRA-2 files of 4 January 2023, kept in one directory per year
+day = merra2.open_day("20230104", "/path/to/merra2")
+
+# Every term of the KEV and VTE budgets, for the eight 3-hour windows of the day
+result = budget.compute(day, n_workers=3)
+
+# The KEV budget by group, over the northeast Pacific
+kev_budget = budget.groups(result, "KEV").sel(lat=slice(15, 60), lon=slice(-170, -110))
+kev_budget
+```
+
+<DatasetRepr html={kevBudgetRepr} label="Output" />
 
 ## References
 

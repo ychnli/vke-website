@@ -21,6 +21,8 @@ export default defineConfig({
   markdown: {
     // LaTeX: $inline$ and $$display$$ are rendered to HTML by KaTeX at build time.
     remarkPlugins: [remarkMath],
+    // Code blocks: a light theme to match the page (Shiki's default is dark).
+    shikiConfig: { theme: 'github-light' },
     // Section headings get ids, and a clickable "#" anchor before the title.
     rehypePlugins: [
       // Budget-term macros. <kind> is one of the term kinds defined in src/styles/global.css:

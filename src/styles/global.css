@@ -123,6 +123,14 @@ a { color: var(--accent); text-underline-offset: 0.15em; }
 .katex { font-size: 1.05em; }
 .katex-display { overflow-x: auto; overflow-y: hidden; padding: 0.4rem 0; }
 
+/* ---------- Code blocks ---------- */
+.prose pre {
+  overflow-x: auto; margin: 1.25rem 0 0; padding: 0.8rem 1rem; border: 1px solid var(--border);
+  border-radius: 6px; background: var(--surface) !important; /* override Shiki's inline background */
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 0.82rem; line-height: 1.55;
+}
+.prose :not(pre) > code { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 0.9em; }
+
 /* ---------- Figures ---------- */
 .figure { margin: 2rem 0; }
 /* Wide figures are 62rem x --fig-scale (default 1), but never wider than the window
