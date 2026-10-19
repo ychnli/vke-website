@@ -100,13 +100,13 @@ All components resolve asset paths with `src/lib/asset.ts`, so links keep workin
 
 ### GitHub Pages
 
-`.github/workflows/pages.yml` builds and publishes the site on every push to `main`. It reads the URL and base path from the repository, so nothing needs to be set by hand. One-time setup: push the repository to GitHub, then in **Settings → Pages** set **Source** to **GitHub Actions**. Runs show up under the **Actions** tab; **Run workflow** there redeploys without a new commit.
+`.github/workflows/pages.yml` builds and publishes the site on every push to `main`. It reads the URL and base path from the repository, so nothing needs to be set by hand. It publishes the monochrome palette; change `PALETTE: mono` to `PALETTE: color` near the top of the workflow to publish the color one. One-time setup: push the repository to GitHub, then in **Settings → Pages** set **Source** to **GitHub Actions**. Runs show up under the **Actions** tab; **Run workflow** there redeploys without a new commit.
 
 To check a Pages build locally (replace `<user>` and `<repo>`):
 
 ```sh
-SITE_URL=https://<user>.github.io SITE_BASE=/<repo> npm run build
-npm run preview        # then open http://localhost:4321/<repo>/
+SITE_URL=https://<user>.github.io SITE_BASE=/<repo> npm run build:mono
+npm run preview:mono   # then open http://localhost:4322/<repo>/
 ```
 
 ### Claude artifact

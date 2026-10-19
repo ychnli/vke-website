@@ -12,7 +12,7 @@ interface Props {
 
 const { title, description = 'An accessible guide to vapor kinetic energy diagnostics for atmospheric rivers.' } =
   Astro.props;
-// DEV ONLY: color scheme to compare (see the end of global.css). Not exposed to readers.
+// Term palette, chosen at build time with PALETTE=mono (see the end of global.css). Readers can't switch it.
 const palette = process.env.PALETTE === 'mono' ? 'mono' : undefined;
 ---
 
@@ -25,7 +25,7 @@ const palette = process.env.PALETTE === 'mono' ? 'mono' : undefined;
     <title>{title}</title>
     {import.meta.env.DEV && (
       <script is:inline>
-        // DEV ONLY: ?palette=mono or ?palette=color overrides PALETTE in `npm run dev`.
+        // `npm run dev` only: ?palette=mono or ?palette=color overrides PALETTE.
         const p = new URLSearchParams(location.search).get('palette');
         if (p === 'mono') document.documentElement.dataset.palette = 'mono';
         else if (p === 'color') delete document.documentElement.dataset.palette;

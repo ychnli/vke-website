@@ -14,6 +14,10 @@ permissions:
   pages: write
   id-token: write
 
+# Term palette of the published site: mono (gray terms, builds to dist-mono/) or color (dist/).
+env:
+  PALETTE: mono
+
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -36,7 +40,7 @@ jobs:
           SITE_BASE: ${{ steps.pages.outputs.base_path }}
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: ${{ env.PALETTE == 'mono' && 'dist-mono' || 'dist' }}
 
   deploy:
     needs: build

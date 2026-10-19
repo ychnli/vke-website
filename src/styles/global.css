@@ -225,11 +225,10 @@ a { color: var(--accent); text-underline-offset: 0.15em; }
 .k-fric,  [data-term='fric'],  [data-color='fric']  { --c: var(--c-fric); }
 .katex [data-term], .katex [data-color] { color: var(--c); }
 
-/* ---------- DEV ONLY: monochrome palette, for comparing color schemes ----------
+/* ---------- Monochrome palette (gray terms) ----------
    Active when <html data-palette="mono">, set by PALETTE=mono at build time
    (npm run build:mono → dist-mono/) or by ?palette=mono under `npm run dev`.
-   To remove: delete this block, the palette lines in Base.astro and astro.config.mjs,
-   and the *:mono scripts in package.json. */
+   The GitHub Pages site is built with it (PALETTE in .github/workflows/pages.yml). */
 :root[data-palette='mono'] {
   --c-tend: #3d4451;
   --c-hflux: #3d4451;

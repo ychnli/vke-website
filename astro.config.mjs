@@ -12,7 +12,7 @@ import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 export default defineConfig({
   site: process.env.SITE_URL,
   base: process.env.SITE_BASE || '/',  // GitHub Pages passes '' for a user or custom-domain site
-  // DEV ONLY: PALETTE=mono builds the monochrome comparison copy into its own folder.
+  // PALETTE=mono builds the monochrome palette into its own folder.
   outDir: process.env.PALETTE === 'mono' ? './dist-mono' : './dist',
   // Emit ./page/index.html so the build works on plain static file hosts.
   trailingSlash: 'ignore',
