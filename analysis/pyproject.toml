@@ -1,0 +1,27 @@
+[project]
+name = "arbudget"
+version = "0.1.0"
+description = "VKE budget diagnostics for the AR website hero figure (ERA5)"
+requires-python = ">=3.12"
+dependencies = [
+  "numpy",
+  "scipy",
+  "xarray",
+  "zarr>=2.18,<3",
+  "gcsfs",
+  "netCDF4",
+  "shapely",
+  "pytest",
+  "h5py>=3.16.0",
+  "pyshp>=3.1.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["arbudget"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

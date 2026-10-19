@@ -1,0 +1,116 @@
+{
+ "case": "Atmospheric river landfall on the US West Coast, 3-5 January 2023 (MERRA-2, 3-hourly)",
+ "grid": {
+  "lon0": -165.0,
+  "dlon": 0.625,
+  "nx": 97,
+  "lat0": 55.0,
+  "dlat": -0.5,
+  "ny": 71
+ },
+ "times": [
+  "2023-01-03T13:30Z",
+  "2023-01-03T16:30Z",
+  "2023-01-03T19:30Z",
+  "2023-01-03T22:30Z",
+  "2023-01-04T01:30Z",
+  "2023-01-04T04:30Z",
+  "2023-01-04T07:30Z",
+  "2023-01-04T10:30Z",
+  "2023-01-04T13:30Z",
+  "2023-01-04T16:30Z",
+  "2023-01-04T19:30Z",
+  "2023-01-04T22:30Z",
+  "2023-01-05T01:30Z",
+  "2023-01-05T04:30Z",
+  "2023-01-05T07:30Z",
+  "2023-01-05T10:30Z"
+ ],
+ "frameLabel": "3-h mean centred on",
+ "fps": 2.5,
+ "fields": {
+  "IVT": {
+   "file": "ivt.bin.gz",
+   "encoding": "u8-linear",
+   "vmax": 1200.0,
+   "units": "kg m⁻¹ s⁻¹"
+  },
+  "IVTE": {
+   "file": "ivte.bin.gz",
+   "encoding": "u8-sqrt",
+   "vmax": 200.0,
+   "units": "kg s⁻²"
+  },
+  "IKEV": {
+   "file": "ikev.bin.gz",
+   "encoding": "u8-sqrt",
+   "vmax": 20000.0,
+   "units": "kg s⁻²"
+  }
+ },
+ "masks": {
+  "IVT": {
+   "file": "mask_ivt.bin.gz",
+   "encoding": "u8-fraction",
+   "level": 0.5
+  },
+  "IVTE": {
+   "file": "mask_ivte.bin.gz",
+   "encoding": "u8-fraction",
+   "level": 0.5
+  },
+  "IKEV": {
+   "file": "mask_ikev.bin.gz",
+   "encoding": "u8-fraction",
+   "level": 0.5
+  }
+ },
+ "terms": {
+  "IVTE": {
+   "scale": 50.0,
+   "emax": 150.0,
+   "encoding": "i8-signed-sqrt",
+   "files": {
+    "tend": "ivte_tend.bin.gz",
+    "hflux": "ivte_hflux.bin.gz",
+    "vflux": "ivte_vflux.bin.gz",
+    "pe": "ivte_pe.bin.gz",
+    "cond": "ivte_cond.bin.gz",
+    "fric": "ivte_fric.bin.gz"
+   }
+  },
+  "IKEV": {
+   "scale": 5000.0,
+   "emax": 15000.0,
+   "encoding": "i8-signed-sqrt",
+   "files": {
+    "tend": "ikev_tend.bin.gz",
+    "hflux": "ikev_hflux.bin.gz",
+    "vflux": "ikev_vflux.bin.gz",
+    "pe": "ikev_pe.bin.gz",
+    "cond": "ikev_cond.bin.gz",
+    "fric": "ikev_fric.bin.gz"
+   }
+  }
+ },
+ "contours": {
+  "IVTE": [
+   12.5,
+   37.5,
+   62.5,
+   87.5,
+   112.5,
+   137.5,
+   162.5,
+   187.5
+  ],
+  "IKEV": [
+   2500.0,
+   7500.0,
+   12500.0,
+   17500.0
+  ]
+ },
+ "termUnits": "kg s⁻² h⁻¹",
+ "notes": "MERRA-2 3-hourly time-averaged budgets (Zhang et al. 2026 framework, computed on Sherlock); cond and fric from MERRA-2 physics tendencies; analysis increments and the surface-pressure term are not displayed; native 0.5 x 0.625 deg grid."
+}

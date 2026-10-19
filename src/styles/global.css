@@ -1,0 +1,241 @@
+:root {
+  --text: #1a1a1a;
+  --muted: #5c6370;
+  --bg: #ffffff;
+  --surface: #f6f7f9;
+  --border: #d8dce2;
+  --accent: #1f6fb2;
+  --measure: 46rem;
+  --avail: 100vw;      /* viewport width available to the page column */
+  --serif: 'STIX Two Text Variable', 'STIX Two Text', Georgia, 'Times New Roman', serif;
+  --sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* ===== Budget-term colors: the ONLY place these are set. =====
+     Each kind is used as \term{kind}{…} / \tc{kind}{…} in equations,
+     <Term kind="…"> panels, and class="k-kind" anywhere else.
+     To add a kind: add a --c-<kind> here and a .k-<kind> line below. */
+  --c-tend: #1f6fb2;   /* net tendency                (blue)   */
+  --c-hflux: #c76a00;  /* horizontal flux convergence (orange) */
+  --c-vflux: #2e8b57;  /* vertical flux convergence   (green)  */
+  --c-pe: #c0392b;     /* PE → KE conversion          (red)    */
+  --c-cond: #7b4fa0;   /* vapor sources & sinks       (purple) */
+  --c-fric: #56677a;   /* turbulence (all subgrid momentum forcing) (slate) */
+
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  font-family: var(--serif);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+}
+
+body { margin: 0; background: var(--bg); font: inherit; color: inherit; } /* inherit html fonts even if a host page styles body */
+
+a { color: var(--accent); text-underline-offset: 0.15em; }
+
+
+.site-footer,
+.prose {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.site-footer { margin-top: 4rem; padding-bottom: 3rem; color: var(--muted); font-size: 0.85rem; }
+
+.prose h1 { font-size: 2.2rem; line-height: 1.2; font-weight: 600; }
+.prose h2 { font-size: 1.6rem; line-height: 1.3; font-weight: 600; margin-top: 3.25rem; }
+.heading-anchor { color: var(--accent); font-weight: 400; text-decoration: none; margin-right: 0.35em; }
+.heading-anchor:hover { text-decoration: underline; }
+.prose h2, .prose h3 { scroll-margin-top: 1rem; }
+.prose h3 { font-size: 1.2rem; margin-top: 2rem; }
+.prose img, .prose video { max-width: 100%; height: auto; }
+
+/* ---------- Sans-serif UI text: captions, navigation, controls, figure labels ---------- */
+.toc, .figure figcaption, .term-picker, .site-footer, .hero .papers, .derivation > summary,
+.lf-head, .lf-legend, .lf-terms, .lf-metric, .lf-controls, .lf-status,
+.fa-controls, .fa-label { font-family: var(--sans); }
+
+/* ---------- Title block ---------- */
+.hero { text-align: center; margin: 3rem 0 2rem; }
+.hero h1 { margin: 0 0 0.75rem; }
+.hero .subtitle { color: var(--muted); font-size: 1.05rem; margin: 0 0 1.25rem; }
+.hero .papers { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem 1.5rem; font-size: 0.95rem; }
+
+/* ---------- TL;DR ---------- */
+.tldr { font-size: 1.1rem; line-height: 1.7; margin: 2rem 0; }
+.tldr > p, .aside > p { margin: 0; }
+.tldr mark { padding: 0.05em 0.2em; border-radius: 3px; color: inherit; }
+.tldr mark { background: color-mix(in srgb, var(--c) 16%, transparent); }
+
+/* ---------- Contents ----------
+   Narrow or touch screens: an inline list where <nav class="toc"> sits in the page.
+   Wide screens with a mouse: a sidebar fixed in the left margin, shown at the top of the page.
+   Once the reader scrolls past the first figure (html.toc-away, set in Base.astro) it slides
+   out, and slides back while the pointer is within --toc-edge of the left edge or over it.
+   The section being read gets aria-current (Base.astro). */
+.toc { font-size: 0.95rem; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 0.75rem 0; margin: 2rem 0; }
+.toc strong { display: block; margin-bottom: 0.25rem; }
+.toc ol { margin: 0; padding-left: 1.5rem; }
+
+@media (min-width: 1200px) and (hover: hover) {
+  :root { --toc-w: 13.5rem; --toc-edge: 1.5rem; --toc-slide: 0.50s; }
+  .toc {
+    position: fixed; top: 0; left: 0; z-index: 10; width: var(--toc-w); height: 100vh;
+    margin: 0; padding: 3.25rem 1rem 2rem 1.75rem; border: 0; font-size: 0.88rem; line-height: 1.4;
+    background: var(--bg); transition: transform var(--toc-slide) ease, box-shadow var(--toc-slide) ease;
+  }
+  /* invisible strip just right of the sidebar: when the sidebar is out, it is the left edge
+     of the window, and hovering it counts as hovering the sidebar */
+  .toc::before { content: ''; position: absolute; top: 0; left: 100%; width: var(--toc-edge); height: 100%; }
+  /* cue while the sidebar is out: a short pill at the left edge, centred vertically */
+  .toc::after {
+    content: ''; position: absolute; top: 50%; left: calc(100% + 5px); width: 4px; height: 3.5rem;
+    margin-top: -1.75rem; border-radius: 2px; background: var(--border);
+    opacity: 0; pointer-events: none; transition: opacity var(--toc-slide) ease;
+  }
+  html.toc-away .toc:not(:hover):not(:has(:focus-visible)) { transform: translateX(-100%); }
+  html.toc-away .toc:not(:hover):not(:has(:focus-visible))::after { opacity: 1; }
+  html.toc-away .toc:is(:hover, :has(:focus-visible)) { box-shadow: 4px 0 18px rgba(0, 0, 0, 0.08); }
+  .toc strong {
+    margin-bottom: 0.75rem; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .toc ol { list-style: none; padding: 0; counter-reset: toc; }
+  .toc li { counter-increment: toc; }
+  .toc a {
+    display: block; padding: 0.3rem 0 0.3rem 0.75rem; border-left: 2px solid var(--border);
+    color: var(--muted); text-decoration: none;
+  }
+  .toc a::before { content: counter(toc) '. '; font-variant-numeric: tabular-nums; }
+  .toc a:hover { color: var(--text); }
+  .toc a[aria-current='true'] { color: var(--accent); border-left-color: var(--accent); }
+}
+@media (prefers-reduced-motion: reduce) { .toc, .toc::after { transition: none; } }
+
+/* ---------- Math ---------- */
+/* Display equations scroll horizontally on narrow screens rather than overflow. */
+.katex { font-size: 1.05em; }
+.katex-display { overflow-x: auto; overflow-y: hidden; padding: 0.4rem 0; }
+
+/* ---------- Figures ---------- */
+.figure { margin: 2rem 0; }
+/* Wide figures are 62rem x --fig-scale (default 1), but never wider than the window
+   (1rem gutter), and stay centred on the text column. Set --fig-scale per figure,
+   e.g. <LandfallFigure size={0.9}>. */
+.figure.wide {
+  --fig-w: min(var(--avail) - 2rem, 62rem * var(--fig-scale, 1));
+  width: var(--fig-w);
+  margin-inline: calc((100% - var(--fig-w)) / 2);
+}
+.figure figcaption { margin-top: 0.5rem; color: var(--muted); font-size: 0.88rem; }
+.figure figcaption .label { font-weight: 600; color: var(--text); }
+.figure figcaption > p { margin: 0.25rem 0 0; }
+.figure figcaption > p:first-of-type { display: inline; }
+
+/* ---------- Callout ---------- */
+.callout {
+  margin: 1.75rem 0;
+  padding: 0.85rem 1.1rem;
+  border-left: 4px solid var(--accent);
+  background: var(--surface);
+  border-radius: 0 6px 6px 0;
+}
+.callout > strong { display: block; margin-bottom: 0.25rem; }
+.callout > :first-child { margin-top: 0; }
+.callout > :last-child { margin-bottom: 0; }
+
+/* ---------- Collapsible derivation ---------- */
+.derivation {
+  margin: 1.75rem 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+.derivation > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.7rem 1rem;
+  font-weight: 600;
+}
+.derivation > summary::-webkit-details-marker { display: none; }
+.derivation > summary::before {
+  content: '▸';
+  display: inline-block;
+  width: 1.1em;
+  color: var(--accent);
+  transition: transform 0.15s ease;
+}
+.derivation[open] > summary::before { transform: rotate(90deg); }
+.derivation > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.derivation-body { padding: 0 1.1rem 0.9rem; border-top: 1px solid var(--border); }
+
+/* ---------- Budget term cards ---------- */
+.terms { display: grid; gap: 0.75rem; margin: 1.5rem 0; }
+.term {
+  border-left: 4px solid var(--c);
+  padding: 0.5rem 0.9rem;
+  background: color-mix(in srgb, var(--c) 6%, var(--bg));
+  border-radius: 0 6px 6px 0;
+}
+.term-name { font-weight: 600; color: var(--c); }
+.term-body > p { margin: 0.25rem 0 0; }
+
+/* ---------- Asides & references ---------- */
+.aside { color: var(--muted); font-size: 0.9rem; }
+.references { font-size: 0.88rem; padding-left: 1.75rem; }
+.references li { margin-bottom: 0.4rem; }
+.references li:target { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+
+/* ---------- Clickable equation terms & term picker ---------- */
+.term-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.5rem; font-size: 0.88rem; }
+.term-hint { color: var(--muted); margin-right: 0.25rem; }
+.term-chip {
+  /* --c comes from the .k-<kind> class. */
+  font: inherit;
+  color: var(--c);
+  background: var(--bg);
+  border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+  border-radius: 999px;
+  padding: 0.15rem 0.7rem;
+  cursor: pointer;
+}
+.term-chip:hover { background: color-mix(in srgb, var(--c) 8%, var(--bg)); }
+.term-chip[aria-expanded='true'], .term-chip[aria-pressed='true'] { background: var(--c); color: #fff; border-color: var(--c); }
+.term-chip:focus-visible { outline: 2px solid var(--c); outline-offset: 2px; }
+
+/* inline-block so the tint covers the whole term, including tall fractions. */
+.katex-display .eq-term { display: inline-block; cursor: pointer; border-radius: 4px; transition: background-color 0.12s ease; }
+.katex-display .eq-term:hover { background: color-mix(in srgb, var(--c) 8%, transparent); }
+.katex-display .eq-term.is-active { background: color-mix(in srgb, var(--c) 15%, transparent); }
+
+/* ---------- Term kind → color (pairs with --c-* in :root) ---------- */
+/* Sets --c for every element tied to a kind: panels and buttons (.k-*),
+   and equation terms (\term → data-term, \tc → data-color). */
+.k-tend,  [data-term='tend'],  [data-color='tend']  { --c: var(--c-tend); }
+.k-hflux, [data-term='hflux'], [data-color='hflux'] { --c: var(--c-hflux); }
+.k-vflux, [data-term='vflux'], [data-color='vflux'] { --c: var(--c-vflux); }
+.k-pe,    [data-term='pe'],    [data-color='pe']    { --c: var(--c-pe); }
+.k-cond,  [data-term='cond'],  [data-color='cond']  { --c: var(--c-cond); }
+.k-fric,  [data-term='fric'],  [data-color='fric']  { --c: var(--c-fric); }
+.katex [data-term], .katex [data-color] { color: var(--c); }
+
+/* ---------- DEV ONLY: monochrome palette, for comparing color schemes ----------
+   Active when <html data-palette="mono">, set by PALETTE=mono at build time
+   (npm run build:mono → dist-mono/) or by ?palette=mono under `npm run dev`.
+   To remove: delete this block, the palette lines in Base.astro and astro.config.mjs,
+   and the *:mono scripts in package.json. */
+:root[data-palette='mono'] {
+  --c-tend: #3d4451;
+  --c-hflux: #3d4451;
+  --c-vflux: #3d4451;
+  --c-pe: #3d4451;
+  --c-cond: #3d4451;
+  --c-fric: #3d4451;
+}
+:root[data-palette='mono'] .tldr mark { background: none; padding: 0; }

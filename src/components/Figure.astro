@@ -1,0 +1,26 @@
+---
+// Static figure (PNG, SVG, JPG, ...). Put files in public/figures/.
+//   <Figure src="figures/vke_map.png" alt="..." label="Figure 1">Caption text with $\LaTeX$.</Figure>
+import { asset } from '../lib/asset';
+
+interface Props {
+  src: string;
+  alt: string;
+  label?: string;
+  wide?: boolean;
+}
+
+const { src, alt, label, wide = false } = Astro.props;
+---
+
+<figure class:list={['figure', { wide }]}>
+  <img src={asset(src)} alt={alt} loading="lazy" decoding="async" />
+  {
+    (label || Astro.slots.has('default')) && (
+      <figcaption>
+        {label && <span class="label">{label}. </span>}
+        <slot />
+      </figcaption>
+    )
+  }
+</figure>

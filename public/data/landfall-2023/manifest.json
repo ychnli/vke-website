@@ -1,0 +1,147 @@
+{
+ "case": "Atmospheric river landfall on the US West Coast, 3-5 January 2023 (ERA5)",
+ "grid": {
+  "lon0": -165.0,
+  "dlon": 0.5,
+  "nx": 121,
+  "lat0": 55.0,
+  "dlat": -0.5,
+  "ny": 71
+ },
+ "times": [
+  "2023-01-03T12Z",
+  "2023-01-03T13Z",
+  "2023-01-03T14Z",
+  "2023-01-03T15Z",
+  "2023-01-03T16Z",
+  "2023-01-03T17Z",
+  "2023-01-03T18Z",
+  "2023-01-03T19Z",
+  "2023-01-03T20Z",
+  "2023-01-03T21Z",
+  "2023-01-03T22Z",
+  "2023-01-03T23Z",
+  "2023-01-04T00Z",
+  "2023-01-04T01Z",
+  "2023-01-04T02Z",
+  "2023-01-04T03Z",
+  "2023-01-04T04Z",
+  "2023-01-04T05Z",
+  "2023-01-04T06Z",
+  "2023-01-04T07Z",
+  "2023-01-04T08Z",
+  "2023-01-04T09Z",
+  "2023-01-04T10Z",
+  "2023-01-04T11Z",
+  "2023-01-04T12Z",
+  "2023-01-04T13Z",
+  "2023-01-04T14Z",
+  "2023-01-04T15Z",
+  "2023-01-04T16Z",
+  "2023-01-04T17Z",
+  "2023-01-04T18Z",
+  "2023-01-04T19Z",
+  "2023-01-04T20Z",
+  "2023-01-04T21Z",
+  "2023-01-04T22Z",
+  "2023-01-04T23Z",
+  "2023-01-05T00Z",
+  "2023-01-05T01Z",
+  "2023-01-05T02Z",
+  "2023-01-05T03Z",
+  "2023-01-05T04Z",
+  "2023-01-05T05Z",
+  "2023-01-05T06Z",
+  "2023-01-05T07Z",
+  "2023-01-05T08Z",
+  "2023-01-05T09Z",
+  "2023-01-05T10Z",
+  "2023-01-05T11Z",
+  "2023-01-05T12Z"
+ ],
+ "fields": {
+  "IVT": {
+   "file": "ivt.bin.gz",
+   "encoding": "u8-linear",
+   "vmax": 1200.0,
+   "units": "kg m⁻¹ s⁻¹"
+  },
+  "IVTE": {
+   "file": "ivte.bin.gz",
+   "encoding": "u8-sqrt",
+   "vmax": 200.0,
+   "units": "kg s⁻²"
+  },
+  "IKEV": {
+   "file": "ikev.bin.gz",
+   "encoding": "u8-sqrt",
+   "vmax": 20000.0,
+   "units": "kg s⁻²"
+  }
+ },
+ "masks": {
+  "IVT": {
+   "file": "mask_ivt.bin.gz",
+   "encoding": "u8-fraction",
+   "level": 0.5
+  },
+  "IVTE": {
+   "file": "mask_ivte.bin.gz",
+   "encoding": "u8-fraction",
+   "level": 0.5
+  },
+  "IKEV": {
+   "file": "mask_ikev.bin.gz",
+   "encoding": "u8-fraction",
+   "level": 0.5
+  }
+ },
+ "terms": {
+  "IVTE": {
+   "scale": 25.0,
+   "emax": 75.0,
+   "encoding": "i8-signed-sqrt",
+   "files": {
+    "tend": "ivte_tend.bin.gz",
+    "hflux": "ivte_hflux.bin.gz",
+    "vflux": "ivte_vflux.bin.gz",
+    "pe": "ivte_pe.bin.gz",
+    "cond": "ivte_cond.bin.gz",
+    "fric": "ivte_fric.bin.gz"
+   }
+  },
+  "IKEV": {
+   "scale": 5000.0,
+   "emax": 15000.0,
+   "encoding": "i8-signed-sqrt",
+   "files": {
+    "tend": "ikev_tend.bin.gz",
+    "hflux": "ikev_hflux.bin.gz",
+    "vflux": "ikev_vflux.bin.gz",
+    "pe": "ikev_pe.bin.gz",
+    "cond": "ikev_cond.bin.gz",
+    "fric": "ikev_fric.bin.gz"
+   }
+  }
+ },
+ "contours": {
+  "IVTE": [
+   12.5,
+   37.5,
+   62.5,
+   87.5,
+   112.5,
+   137.5,
+   162.5,
+   187.5
+  ],
+  "IKEV": [
+   2500.0,
+   7500.0,
+   12500.0,
+   17500.0
+  ]
+ },
+ "termUnits": "kg s⁻² h⁻¹",
+ "notes": "cond and fric are residuals of the vapor and kinetic-energy equations (ERA5 has no physics tendencies); terms are 3-hour running means; 0.5 deg display grid."
+}

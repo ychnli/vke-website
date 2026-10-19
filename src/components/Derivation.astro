@@ -1,0 +1,17 @@
+---
+// Collapsible box for derivations and other optional detail. Closed by default.
+//   <Derivation title="Deriving the budget">...math and text...</Derivation>
+// Leave a blank line after the opening tag so the contents are parsed as Markdown.
+interface Props {
+  title?: string;
+  open?: boolean;
+}
+const { title = 'Derivation', open = false } = Astro.props;
+---
+
+<details class="derivation" open={open}>
+  <summary>{title}</summary>
+  <div class="derivation-body">
+    <slot />
+  </div>
+</details>

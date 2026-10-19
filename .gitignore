@@ -1,0 +1,20 @@
+node_modules/
+dist/
+dist-mono/
+artifact/
+artifact-mono/
+*.build/
+.astro/
+.DS_Store
+.env
+
+# analysis pipeline
+analysis/data/
+analysis/.venv/
+analysis/.ref-env/
+__pycache__/
+
+# private material: journal PDFs, collaborators' code, raw notes
+papers/
+reference/
+drafts/

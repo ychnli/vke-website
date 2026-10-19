@@ -1,0 +1,213 @@
+---
+// Playable animation from a sequence of image frames, with play/pause,
+// a time slider, step buttons and speed control.
+//
+// Frames are listed explicitly...
+//   <FrameAnimation frames={['animations/ar/t00.png', 'animations/ar/t01.png']} alt="..." />
+// ...or generated from a pattern, where {i} is replaced by the zero-padded index:
+//   <FrameAnimation pattern="animations/ar/frame_{i}.png" count={48} pad={3} alt="..." />
+//
+// Optional `labels` (one per frame, e.g. timestamps) are shown next to the slider.
+// Keyboard: when the player has focus, Space plays/pauses and ←/→ step one frame.
+import { asset } from '../lib/asset';
+
+interface Props {
+  frames?: string[];
+  pattern?: string;
+  count?: number;
+  start?: number;
+  pad?: number;
+  labels?: string[];
+  fps?: number;
+  loop?: boolean;
+  autoplay?: boolean;
+  alt: string;
+  label?: string;
+  wide?: boolean;
+}
+
+const {
+  frames,
+  pattern,
+  count = 0,
+  start = 0,
+  pad = 0,
+  labels,
+  fps = 4,
+  loop = true,
+  autoplay = false,
+  alt,
+  label,
+  wide = false,
+} = Astro.props;
+
+const srcs = (
+  frames ??
+  Array.from({ length: count }, (_, k) => pattern!.replace('{i}', String(start + k).padStart(pad, '0')))
+).map(asset);
+
+if (srcs.length === 0) throw new Error('FrameAnimation: provide `frames` or `pattern` + `count`.');
+if (labels && labels.length !== srcs.length)
+  throw new Error(`FrameAnimation: got ${labels.length} labels for ${srcs.length} frames.`);
+
+const speeds = [0.25, 0.5, 1, 2, 4];
+---
+
+<figure class:list={['figure', { wide }]}>
+  <frame-animation
+    data-frames={JSON.stringify(srcs)}
+    data-labels={labels ? JSON.stringify(labels) : undefined}
+    data-fps={fps}
+    data-loop={loop ? '' : undefined}
+    data-autoplay={autoplay ? '' : undefined}
+    tabindex="0"
+    role="group"
+    aria-label={`Animation: ${alt}`}
+  >
+    <img class="fa-image" src={srcs[0]} alt={alt} decoding="async" />
+    <div class="fa-controls">
+      <button type="button" class="fa-step" data-step="-1" aria-label="Previous frame">⏮</button>
+      <button type="button" class="fa-play" aria-label="Play">▶</button>
+      <button type="button" class="fa-step" data-step="1" aria-label="Next frame">⏭</button>
+      <input class="fa-slider" type="range" min="0" max={srcs.length - 1} value="0" step="1" aria-label="Frame" />
+      <span class="fa-label" aria-live="off">{labels ? labels[0] : `1 / ${srcs.length}`}</span>
+      <select class="fa-speed" aria-label="Playback speed">
+        {speeds.map((s) => <option value={s} selected={s === 1}>{s}×</option>)}
+      </select>
+    </div>
+  </frame-animation>
+  {
+    (label || Astro.slots.has('default')) && (
+      <figcaption>
+        {label && <span class="label">{label}. </span>}
+        <slot />
+      </figcaption>
+    )
+  }
+</figure>
+
+<style>
+  frame-animation {
+    display: block;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    overflow: hidden;
+  }
+  frame-animation:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .fa-image { display: block; width: 100%; height: auto; }
+  .fa-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.9rem;
+  }
+  .fa-controls button {
+    min-width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .fa-slider { flex: 1; min-width: 4rem; accent-color: var(--accent); }
+  .fa-label { min-width: 5.5rem; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .fa-speed { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px; }
+</style>
+
+<script>
+  class FrameAnimation extends HTMLElement {
+    private frames: string[] = [];
+    private labels: string[] | null = null;
+    private index = 0;
+    private timer: number | undefined;
+    private speed = 1;
+    private img!: HTMLImageElement;
+    private slider!: HTMLInputElement;
+    private label!: HTMLElement;
+    private playBtn!: HTMLButtonElement;
+
+    connectedCallback() {
+      this.frames = JSON.parse(this.dataset.frames!);
+      this.labels = this.dataset.labels ? JSON.parse(this.dataset.labels) : null;
+      this.img = this.querySelector('.fa-image')!;
+      this.slider = this.querySelector('.fa-slider')!;
+      this.label = this.querySelector('.fa-label')!;
+      this.playBtn = this.querySelector('.fa-play')!;
+
+      this.playBtn.addEventListener('click', () => this.toggle());
+      this.querySelectorAll<HTMLButtonElement>('.fa-step').forEach((b) =>
+        b.addEventListener('click', () => this.step(Number(b.dataset.step))),
+      );
+      this.slider.addEventListener('input', () => {
+        this.pause();
+        this.show(Number(this.slider.value));
+      });
+      this.querySelector<HTMLSelectElement>('.fa-speed')!.addEventListener('change', (e) => {
+        this.speed = Number((e.target as HTMLSelectElement).value);
+        if (this.playing) this.play();
+      });
+      this.addEventListener('keydown', (e) => {
+        if (e.target instanceof HTMLSelectElement || e.target instanceof HTMLInputElement) return;
+        if (e.key === ' ') { e.preventDefault(); this.toggle(); }
+        else if (e.key === 'ArrowRight') { e.preventDefault(); this.step(1); }
+        else if (e.key === 'ArrowLeft') { e.preventDefault(); this.step(-1); }
+      });
+
+      // Preload frames once the player scrolls near the viewport.
+      const io = new IntersectionObserver((entries) => {
+        if (!entries.some((en) => en.isIntersecting)) return;
+        io.disconnect();
+        this.frames.forEach((src) => { new Image().src = src; });
+        const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (this.dataset.autoplay !== undefined && !reduce) this.play();
+      }, { rootMargin: '200px' });
+      io.observe(this);
+    }
+
+    disconnectedCallback() { this.pause(); }
+
+    get playing() { return this.timer !== undefined; }
+
+    show(i: number) {
+      this.index = i;
+      this.img.src = this.frames[i];
+      this.slider.value = String(i);
+      this.label.textContent = this.labels ? this.labels[i] : `${i + 1} / ${this.frames.length}`;
+    }
+
+    step(d: number) {
+      this.pause();
+      const n = this.frames.length;
+      this.show((this.index + d + n) % n);
+    }
+
+    play() {
+      clearInterval(this.timer);
+      if (this.index === this.frames.length - 1) this.show(0);
+      const fps = Number(this.dataset.fps) * this.speed;
+      this.timer = window.setInterval(() => {
+        const next = this.index + 1;
+        if (next < this.frames.length) this.show(next);
+        else if (this.dataset.loop !== undefined) this.show(0);
+        else this.pause();
+      }, 1000 / fps);
+      this.playBtn.textContent = '⏸';
+      this.playBtn.setAttribute('aria-label', 'Pause');
+    }
+
+    pause() {
+      clearInterval(this.timer);
+      this.timer = undefined;
+      this.playBtn.textContent = '▶';
+      this.playBtn.setAttribute('aria-label', 'Play');
+    }
+
+    toggle() { this.playing ? this.pause() : this.play(); }
+  }
+
+  customElements.define('frame-animation', FrameAnimation);
+</script>

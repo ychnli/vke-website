@@ -1,0 +1,62 @@
+---
+import '@fontsource-variable/stix-two-text';
+import '@fontsource-variable/stix-two-text/wght-italic.css';
+import '@fontsource-variable/inter';
+import 'katex/dist/katex.min.css';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'An accessible guide to vapor kinetic energy diagnostics for atmospheric rivers.' } =
+  Astro.props;
+// DEV ONLY: color scheme to compare (see the end of global.css). Not exposed to readers.
+const palette = process.env.PALETTE === 'mono' ? 'mono' : undefined;
+---
+
+<!doctype html>
+<html lang="en" data-palette={palette}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    {import.meta.env.DEV && (
+      <script is:inline>
+        // DEV ONLY: ?palette=mono or ?palette=color overrides PALETTE in `npm run dev`.
+        const p = new URLSearchParams(location.search).get('palette');
+        if (p === 'mono') document.documentElement.dataset.palette = 'mono';
+        else if (p === 'color') delete document.documentElement.dataset.palette;
+      </script>
+    )}
+  </head>
+  <body>
+    <main class="prose">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <slot name="footer" />
+    </footer>
+    <script>
+      // Contents: mark the link of the section currently being read.
+      const links = [...document.querySelectorAll<HTMLAnchorElement>('.toc a[href^="#"]')];
+      const targets = links.map((a) => document.getElementById(decodeURIComponent(a.hash.slice(1))));
+      function markCurrent() {
+        let cur = -1;
+        targets.forEach((t, i) => { if (t && t.getBoundingClientRect().top <= innerHeight * 0.3) cur = i; });
+        links.forEach((a, i) => (i === cur ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current')));
+      }
+      // Contents sidebar (wide screens): docked at the top, slides away past the first figure.
+      const firstFigure = document.querySelector('.prose .figure');
+      function dock() {
+        const away = firstFigure ? firstFigure.getBoundingClientRect().bottom < 0 : scrollY > innerHeight;
+        document.documentElement.classList.toggle('toc-away', away);
+      }
+      addEventListener('scroll', () => { markCurrent(); dock(); }, { passive: true });
+      markCurrent();
+      dock();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 320" width="640" height="320">
+  <rect width="640" height="320" fill="#dfe9f3"/>
+  <ellipse cx="153.33333333333331" cy="210" rx="150" ry="28" transform="rotate(-18 153.33333333333331 210)" fill="#2a6fb0" opacity="0.75"/>
+  <text x="20" y="300" font-family="sans-serif" font-size="16" fill="#333">Placeholder frame 5/24</text>
+</svg>

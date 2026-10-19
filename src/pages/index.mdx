@@ -1,0 +1,255 @@
+---
+title: Atmospheric Rivers & Vapor Kinetic Energy
+---
+import Base from '../layouts/Base.astro';
+import Figure from '../components/Figure.astro';
+import Callout from '../components/Callout.astro';
+import Derivation from '../components/Derivation.astro';
+import Term from '../components/Term.astro';
+import TermPanels from '../components/TermPanels.astro';
+import LandfallFigure from '../components/LandfallFigure.astro';
+
+<Base title={frontmatter.title}>
+
+<header class="hero">
+  <h1>Atmospheric rivers through the lens of the vapor kinetic energy</h1>
+  <p class="subtitle">A visual guide to a new framework for tracking and understanding atmospheric rivers</p>
+  <div class="papers">
+    <a href="https://doi.org/10.1038/s41467-024-53369-0">Ong &amp; Yang (2024), <em>Nat. Commun.</em></a>
+    <a href="https://doi.org/10.1029/2025GL119841">Zhang, Yang, Ong &amp; Tan (2026), <em>GRL</em></a>
+  </div>
+</header>
+
+<LandfallFigure size={0.9}>
+  An atmospheric river making landfall on the US West Coast, 3–5 January 2023 (MERRA-2, 3-hourly means). **Left:** integrated vapor transport (IVT), with the AR detected from IVT outlined. **Right:** the same AR detected from vapor transport energy (IVTE) or the kinetic energy of vapor (IKEV); light contours show the metric itself. Shading shows either the metric ("Value") or the selected term of its budget, where red builds the AR up and blue erodes it. Budgets follow Zhang et al. (2026); vapor sources/sinks and turbulence come from MERRA-2's physics tendencies. "Turbulence" is shorthand for all subgrid momentum forcing, which in MERRA-2 comprises turbulence, gravity-wave drag and convection.
+</LandfallFigure>
+
+<div class="tldr">
+  <strong>TL;DR:</strong> Integrated vapor transport (IVT) is the standard tool for detecting atmospheric rivers, but it has no clean budget equation. <mark class="k-tend">**Vapor kinetic energy**</mark> detects the same atmospheric rivers and comes with a simple budget equation, allowing us to study their evolution. We show that atmospheric rivers <mark class="k-pe">grow by converting potential to kinetic energy</mark>, decay through <mark class="k-cond">condensation</mark> and <mark class="k-fric">turbulence</mark>, and <mark class="k-hflux">move by convergence of vapor kinetic energy flux</mark>.
+</div>
+
+<nav class="toc" aria-label="Contents">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#what-is-an-atmospheric-river">What is an atmospheric river?</a></li>
+    <li><a href="#limitations-of-ivt">Limitations of IVT</a></li>
+    <li><a href="#from-momentum-to-energy">From momentum to energy</a></li>
+    <li><a href="#the-budget-equations">The budget equations</a></li>
+    <li><a href="#code">Code</a></li>
+    <li><a href="#references">References</a></li>
+  </ol>
+</nav>
+
+## What is an atmospheric river?
+
+Atmospheric rivers (ARs) are long, narrow filaments of intense water vapor transport in the mid-latitudes. They are thousands of kilometers long, a few hundred kilometers wide, and drift eastward with the extratropical cyclones that accompany them [[3]](#ref-3). On average, an AR carries more water than the Amazon River, and ARs together account for most poleward vapor transport in the mid-latitudes [[4]](#ref-4)[[5]](#ref-5). At landfall they supply much of the precipitation along the coasts they hit, and cause many of the worst floods and wind events there [[6]](#ref-6).
+
+{/* FIGURE SLOT: snapshot (or short animation) of an AR making landfall, e.g. the January 2023 event from Ong & Yang (2024) Fig. 5 / Movie S3. */}
+
+An AR needs two ingredients: **abundant water vapor** and **strong winds**. The standard AR diagnostic that captures both is the **integrated vapor transport** (IVT):
+
+$$
+\mathrm{IVT} \equiv \sqrt{\left(-\frac{1}{g}\int_{p_s}^{p_t} qu\,\mathrm{d}p\right)^{2} + \left(-\frac{1}{g}\int_{p_s}^{p_t} qv\,\mathrm{d}p\right)^{2}}
+$$
+
+where $q$ is specific humidity, $(u, v)$ is the horizontal wind, $p_s$ is surface pressure, and $p_t$ (usually 200 hPa) is a level above which vapor is negligible. IVT is the magnitude of the column-integrated vapor flux $q\mathbf{u}$. Its units are $\mathrm{kg\,m^{-1}\,s^{-1}}$ and represents the mass of water vapor crossing a 1 m line per second, summed over the column. ARs typically exceed about $250\ \mathrm{kg\,m^{-1}\,s^{-1}}$.
+
+Most AR detection algorithms rely on thresholds of IVT [[7]](#ref-7). They differ in detail but agree on five regions of frequent ARs: the North Pacific, southeast Pacific, North Atlantic, South Atlantic and southern Indian Ocean [[8]](#ref-8).
+
+## Limitations of IVT
+
+IVT is good at detecting ARs but poor at explaining them. Process studies have instead constructed budgets of column water vapor (AKA total precipitable water, up to a factor of density $\rho$). This can track where an AR's moisture comes from (mainly convergence) and where it goes (mainly precipitation), but it leaves out the wind entirely, implicitly treating wind evolution as secondary. Given how closely ARs are tied to extratropical cyclones and low-level jets, and how much of their damage comes from wind, we consider this limitation in developing a new metric for ARs.
+
+{/* <Callout title="What we want:">
+  A quantity that (1) combines moisture and wind, as IVT does; (2) detects the same ARs; and (3) has a simple budget equation derived directly from the equations of motion.
+</Callout> */}
+
+## From momentum to energy
+
+One can think of the vapor flux $q\mathbf{u}$ as a moisture-weighted momentum. In classical mechanics, when momentum is unwieldy, we can turn to energy. Denoting the kinetic energy per unit mass $K \equiv (u^2+v^2)/2$, two "vapor-weighted kinetic energies" are natural:
+
+$$
+\begin{aligned}
+\text{kinetic energy of vapor:}\qquad \mathrm{KEV} &\equiv qK \\[4pt]
+\text{vapor transport energy:}\qquad \mathrm{VTE} &\equiv q^2K = \tfrac12\,|q\mathbf{u}|^2
+\end{aligned}
+$$
+
+KEV is the kinetic energy carried by the vapor. VTE is half the squared norm of the vapor flux $q\mathbf{u}$, playing a similar role as $K$ for $\mathbf{u}$. Both have units of $\mathrm{J\,kg^{-1}}$. Because $q$, $u$ and $v$ enter VTE with equal powers, as in IVT, VTE is weighted more toward moisture and KEV more toward wind.
+
+<div class="aside">
+  A note on names: [[1]](#ref-1) introduced $q^2K$ as <em>vapor kinetic energy</em> (VKE). [[2]](#ref-2) renamed it vapor transport energy (VTE) to distinguish it from KEV, and "VKE" now refers to the framework.
+</div>
+
+{/* Why not use the budgets of $q$ and $K$ separately? $K$ peaks in the upper-tropospheric jet, far above most of the vapor. Weighting by $q$ focuses the budget on the lower troposphere, where the vapor and the low-level jet are. */}
+
+The column integrals, in $\mathrm{J\,m^{-2}}$, are
+
+$$
+\begin{aligned}
+\mathrm{IKEV} &\equiv -\frac{1}{g}\int_{p_s}^{p_t} qK\,dp, &
+\mathrm{IVTE} &\equiv -\frac{1}{g}\int_{p_s}^{p_t} q^2K\,dp.
+\end{aligned}
+$$
+
+Swap either one into an IVT-based detection algorithm, retune the threshold to match the global AR frequency, and the detected ARs are nearly identical. With IVTE, AR frequency changes by only 2–4 days per year, less than the ~10 days per year separating two standard IVT algorithms [[1]](#ref-1). IKEV detects slightly fewer ARs at low latitudes and more at high southern latitudes, where the jet is strong [[2]](#ref-2).
+
+{/* FIGURE SLOT (interactive): AR frequency from IVT vs IKEV vs IVTE, after Zhang et al. (2026) Fig. 1. A toggle or slider would make the near-identity obvious. */}
+
+## The budget equations
+
+The KEV and VTE budgets follow from the moisture and momentum equations by the product rule (derivation below). In flux form [[2]](#ref-2):
+
+$$
+\tc{tend}{\frac{\partial\,\mathrm{KEV}}{\partial t}}
+=
+\term{hflux}{\underbrace{-\nabla_p\!\cdot\!\left(\mathbf{u}\,\mathrm{KEV}\right)}_{\text{horizontal flux}}}
+\;\term{vflux}{\underbrace{-\,\frac{\partial\left(\omega\,\mathrm{KEV}\right)}{\partial p}}_{\text{vertical flux}}}
+\;\term{pe}{\underbrace{-\,q\,\mathbf{u}\cdot\nabla_p\Phi}_{\text{PE}\,\to\,\text{KE}}}
+\;\term{cond}{\underbrace{+\;K\,S}_{\text{vapor sources/sinks}}}
+\;\term{fric}{\underbrace{+\;q\,\mathbf{u}\cdot\mathbf{F}}_{\text{turbulence}}}
+$$
+
+$$
+\tc{tend}{\frac{\partial\,\mathrm{VTE}}{\partial t}}
+=
+\term{hflux}{-\nabla_p\!\cdot\!\left(\mathbf{u}\,\mathrm{VTE}\right)}
+\;\term{vflux}{-\,\frac{\partial\left(\omega\,\mathrm{VTE}\right)}{\partial p}}
+\;\term{pe}{-\,q^2\,\mathbf{u}\cdot\nabla_p\Phi}
+\;\term{cond}{+\;2qK\,S}
+\;\term{fric}{+\;q^2\,\mathbf{u}\cdot\mathbf{F}}
+$$
+
+Here $\omega$ is pressure velocity, $\Phi$ is geopotential, $S$ is the net vapor source, and $\mathbf{F}$ is the parameterized subgrid momentum forcing. We call it "turbulence" for short because that is the dominant term, but it includes all subgrid momentum forcing; in MERRA-2, that is turbulence, gravity-wave drag and convection. The two equations differ only in their moisture weighting.
+
+<TermPanels>
+  <Term kind="hflux" name="Horizontal flux convergence">
+
+  Horizontal winds carry VKE through the AR. Convergence downstream and divergence upstream move the AR. In some regions, net convergence also adds to its growth.
+
+  </Term>
+  <Term kind="vflux" name="Vertical flux convergence">
+
+  Redistributes VKE vertically, but nearly vanishes in the column integral, since $\omega \approx 0$ at the surface and $q \approx 0$ at $p_t$.
+
+  </Term>
+  <Term kind="pe" name="Conversion of potential to kinetic energy">
+
+  Flow down the geopotential gradient accelerates. Geostrophic flow runs along $\Phi$ contours and does no work, so only the ageostrophic (cross-contour) flow converts PE to KE. This is the process that drives low-level jets, and it is absent from the water vapor budget.
+
+  </Term>
+  <Term kind="cond" name="Vapor sources & sinks">
+
+  Condensation removes vapor, and with it the kinetic energy that vapor carried ($KS<0$). Surface evaporation adds vapor and acts as a source.
+
+  </Term>
+  <Term kind="fric" name="Turbulence">
+
+  The term includes all subgrid momentum forcing, which in MERRA-2 comprises turbulence, gravity-wave drag and convection. The main component is turbulent drag, concentrated in the boundary layer, which slows the wind and removes VKE.
+
+  </Term>
+</TermPanels>
+
+### Integrating over the column
+
+With $\langle\,\cdot\,\rangle \equiv -\frac{1}{g}\int_{p_s}^{p_t}(\,\cdot\,)\,dp$, the column budget is, to a very good approximation,
+
+$$
+\tc{tend}{\frac{\partial\,\mathrm{IKEV}}{\partial t}}
+\approx
+\tc{hflux}{-\big\langle\nabla_p\!\cdot\!(\mathbf{u}\,\mathrm{KEV})\big\rangle}
+\;\tc{pe}{-\,\big\langle q\,\mathbf{u}\cdot\nabla_p\Phi\big\rangle}
+\;\tc{cond}{+\,\big\langle K S\big\rangle}
+\;\tc{fric}{+\,\big\langle q\,\mathbf{u}\cdot\mathbf{F}\big\rangle}
+$$
+
+and likewise for IVTE.
+
+<Derivation title="Derivation of the budget equations">
+
+Let $K \equiv |\mathbf{u}|^2/2$ be the kinetic energy per unit mass, and define
+$\mathrm{KEV} \equiv qK$ and $\mathrm{VTE} \equiv q^2K = |q\mathbf{u}|^2/2$.
+With the material derivative $\frac{D}{Dt} \equiv \frac{\partial}{\partial t} + \mathbf{u}\cdot\nabla_p + \omega\frac{\partial}{\partial p}$,
+the moisture and horizontal momentum equations of the hydrostatic primitive equations are
+
+$$
+\frac{Dq}{Dt} = S, \qquad
+\frac{D\mathbf{u}}{Dt} = -\left(f + \frac{u\tan\vartheta}{a}\right)\mathbf{k}\times\mathbf{u} - \nabla_p\Phi + \mathbf{F},
+$$
+
+where $f = 2\Omega\sin\vartheta$ is the Coriolis parameter, $\vartheta$ is latitude, and $a$ is Earth's radius.
+
+**Kinetic energy.** Dotting the momentum equation with $\mathbf{u}$ removes the Coriolis and
+curvature terms, since $\mathbf{u}\cdot(\mathbf{k}\times\mathbf{u}) = 0$:
+
+$$
+\frac{DK}{Dt} = -\,\mathbf{u}\cdot\nabla_p\Phi + \mathbf{u}\cdot\mathbf{F}.
+$$
+
+**Product rule.** Combining with the moisture equation,
+
+$$
+\begin{aligned}
+\frac{D\,\mathrm{KEV}}{Dt} &= K\frac{Dq}{Dt} + q\frac{DK}{Dt} = K S - q\,\mathbf{u}\cdot\nabla_p\Phi + q\,\mathbf{u}\cdot\mathbf{F}, \\[4pt]
+\frac{D\,\mathrm{VTE}}{Dt} &= 2qK\frac{Dq}{Dt} + q^2\frac{DK}{Dt} = 2qK S - q^2\,\mathbf{u}\cdot\nabla_p\Phi + q^2\,\mathbf{u}\cdot\mathbf{F}.
+\end{aligned}
+$$
+
+Equivalently, the VTE budget follows from dotting the vapor-transport equation
+$D(q\mathbf{u})/Dt = q\,D\mathbf{u}/Dt + \mathbf{u}S$ with $q\mathbf{u}$.
+
+**Flux form.** By continuity, $\nabla_p\cdot\mathbf{u} + \partial\omega/\partial p = 0$, so for any $X$,
+
+$$
+\frac{\partial X}{\partial t} = -\nabla_p\cdot(\mathbf{u}X) - \frac{\partial(\omega X)}{\partial p} + \frac{DX}{Dt}.
+$$
+
+**Column integral.** Define $\langle X\rangle \equiv \frac{1}{g}\int_{p_t}^{p_s} X\,dp$. Because the surface
+pressure $p_s$ varies in space and time, integrating each flux-form term gives
+
+$$
+\begin{aligned}
+\left\langle\frac{\partial X}{\partial t}\right\rangle &= \frac{\partial\langle X\rangle}{\partial t} - \frac{X_s}{g}\frac{\partial p_s}{\partial t}, \\[4pt]
+\big\langle\nabla_p\cdot(\mathbf{u}X)\big\rangle &= \nabla\cdot\langle\mathbf{u}X\rangle - \frac{X_s}{g}\,\mathbf{u}_s\cdot\nabla p_s, \\[4pt]
+\left\langle\frac{\partial(\omega X)}{\partial p}\right\rangle &= \frac{1}{g}\Big[(\omega X)_s - (\omega X)_t\Big].
+\end{aligned}
+$$
+
+The surface terms combine to $\frac{X_s}{g}\left(\frac{\partial p_s}{\partial t} + \mathbf{u}_s\cdot\nabla p_s - \omega_s\right)$,
+which vanishes by the kinematic boundary condition $\omega_s = Dp_s/Dt$. The top term is negligible
+because $q(p_t) \approx 0$. The column budgets are therefore
+
+$$
+\begin{aligned}
+\frac{\partial\,\mathrm{IKEV}}{\partial t} &= -\nabla\cdot\langle\mathbf{u}\,\mathrm{KEV}\rangle + \langle K S\rangle - \langle q\,\mathbf{u}\cdot\nabla_p\Phi\rangle + \langle q\,\mathbf{u}\cdot\mathbf{F}\rangle, \\[4pt]
+\frac{\partial\,\mathrm{IVTE}}{\partial t} &= -\nabla\cdot\langle\mathbf{u}\,\mathrm{VTE}\rangle + \langle 2qK S\rangle - \langle q^2\,\mathbf{u}\cdot\nabla_p\Phi\rangle + \langle q^2\,\mathbf{u}\cdot\mathbf{F}\rangle.
+\end{aligned}
+$$
+
+<div className="aside">
+
+In MERRA-2, $S$ combines moist physics, turbulence (including surface evaporation) and chemistry,
+and $\mathbf{F}$ combines turbulence, gravity-wave drag and convection. Ong &amp; Yang (2024) also
+track a small contribution from data-assimilation increments.
+</div>
+
+</Derivation>
+
+## Code
+
+We are developing an open-source Python package for these diagnostics, [vke-budgets](https://github.com/ychnli/vke-budgets). It takes the winds, humidity, geopotential and surface pressure from a reanalysis and computes every term of the column-integrated KEV and VTE budgets on its grid. It currently reads MERRA-2, whose physics tendencies give the vapor sources/sinks and turbulence terms directly. Support for ERA5 is forthcoming.
+
+## References
+
+<ol class="references">
+  <li id="ref-1">Ong &amp; Yang (2024). Vapor kinetic energy for the detection and understanding of atmospheric rivers. <a href="https://doi.org/10.1038/s41467-024-53369-0"><em>Nat. Commun.</em></a></li>
+  <li id="ref-2">Zhang et al. (2026). Understanding the evolution of global atmospheric rivers with a vapor kinetic energy framework. <a href="https://doi.org/10.1029/2025GL119841"><em>Geophys. Res. Lett.</em></a></li>
+  <li id="ref-3">Ralph et al. (2018). Defining “atmospheric river”: How the Glossary of Meteorology helped resolve a debate. <a href="https://doi.org/10.1175/BAMS-D-17-0157.1"><em>Bull. Am. Meteorol. Soc.</em></a></li>
+  <li id="ref-4">Ralph et al. (2017). Dropsonde observations of total integrated water vapor transport within North Pacific atmospheric rivers. <a href="https://doi.org/10.1175/JHM-D-17-0036.1"><em>J. Hydrometeorol.</em></a></li>
+  <li id="ref-5">Zhu &amp; Newell (1998). A proposed algorithm for moisture fluxes from atmospheric rivers. <a href="https://doi.org/10.1175/1520-0493(1998)126%3C0725:APAFMF%3E2.0.CO;2"><em>Mon. Weather Rev.</em></a></li>
+  <li id="ref-6">Waliser &amp; Guan (2017). Extreme winds and precipitation during landfall of atmospheric rivers. <a href="https://doi.org/10.1038/ngeo2894"><em>Nat. Geosci.</em></a></li>
+  <li id="ref-7">Rutz et al. (2019). The Atmospheric River Tracking Method Intercomparison Project (ARTMIP): Quantifying uncertainties in atmospheric river climatology. <a href="https://doi.org/10.1029/2019JD030936"><em>J. Geophys. Res. Atmos.</em></a></li>
+  <li id="ref-8">Lora et al. (2020). Consensus and disagreement in atmospheric river detection: ARTMIP global catalogues. <a href="https://doi.org/10.1029/2020GL089302"><em>Geophys. Res. Lett.</em></a></li>
+</ol>
+
+</Base>

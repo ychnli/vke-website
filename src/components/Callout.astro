@@ -1,0 +1,11 @@
+---
+// Highlighted box for key takeaways or definitions.
+//   <Callout title="Key idea">...</Callout>
+interface Props { title?: string }
+const { title } = Astro.props;
+---
+
+<aside class="callout">
+  {title && <strong>{title}</strong>}
+  <slot />
+</aside>

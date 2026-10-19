@@ -1,0 +1,17 @@
+---
+// One term of a budget equation, color-coded to match the equation and figures.
+// Place inside <TermPanels>; it stays hidden until the reader selects it.
+//   <Term kind="pe" name="PE → KE conversion">Description with $math$.</Term>
+// `kind` selects the color (set once in global.css as --c-<kind>) and links the
+// panel to equation terms written \term{<kind>}{...}.
+interface Props {
+  kind: 'tend' | 'hflux' | 'vflux' | 'pe' | 'cond' | 'fric';
+  name: string;
+}
+const { kind, name } = Astro.props;
+---
+
+<div class={`term k-${kind}`} id={`term-${kind}`} data-term-panel={kind} role="region" aria-label={name}>
+  <div class="term-name">{name}</div>
+  <div class="term-body"><slot /></div>
+</div>

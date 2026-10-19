@@ -1,0 +1,496 @@
+---
+// Hero figure: the January 2023 landfalling AR seen through IVT (left) and the VKE budget
+// (right). Data come from analysis/ (ERA5) via public/data/landfall-2023/manifest.json.
+//   <LandfallFigure size={0.9}>Caption…</LandfallFigure>
+// `size` scales the figure's full width (1 = 62rem); it never exceeds the screen.
+// Term buttons reuse the .k-<kind> colors defined once in global.css.
+import { asset } from '../lib/asset';
+
+interface Props {
+  /** Folder under public/data/ written by analysis/scripts/04_export.py */
+  case?: string;
+  /** Width relative to the default wide-figure width (62rem). */
+  size?: number;
+}
+const { case: caseName = 'landfall-2023-merra2', size = 1 } = Astro.props;
+const base = asset(`data/${caseName}/`);
+// 'value' shades the metric itself (IVTE or IKEV) instead of a budget term.
+const terms = [
+  ['value', 'Value'],
+  ['tend', 'Total tendency'],
+  ['hflux', 'Horizontal flux'],
+  ['vflux', 'Vertical flux'],
+  ['pe', 'PE → KE'],
+  ['cond', 'Vapor sources & sinks'],
+  ['fric', 'Turbulence'],
+];
+---
+
+<figure class="figure wide landfall" style={`--fig-scale: ${size}`}>
+  <landfall-figure data-base={base} tabindex="0" role="group" aria-label="Animated maps of an atmospheric river making landfall, 3–5 January 2023">
+    <div class="lf-panels">
+      <section class="lf-panel" data-panel="ivt">
+        <header class="lf-head">
+          <div>
+            <h3>Integrated vapor transport</h3>
+          </div>
+        </header>
+        <div class="lf-map">
+          <canvas></canvas><svg aria-hidden="true"></svg><div class="lf-readout" aria-hidden="true"></div>
+          <ul class="lf-key">
+            <li><span class="lf-swatch bold"></span>Bold contour: AR detected from IVT</li>
+          </ul>
+        </div>
+        <div class="lf-legend" data-legend></div>
+      </section>
+
+      <section class="lf-panel" data-panel="vke">
+        <header class="lf-head">
+          <div>
+            <h3 class="lf-vke-title">IVTE tendency</h3>
+          </div>
+          <div class="lf-metric" role="group" aria-label="Metric">
+            <button type="button" data-metric="IVTE" aria-pressed="true">IVTE</button>
+            <button type="button" data-metric="IKEV" aria-pressed="false">IKEV</button>
+          </div>
+        </header>
+        <div class="lf-map">
+          <canvas></canvas><svg aria-hidden="true"></svg><div class="lf-readout" aria-hidden="true"></div>
+          <ul class="lf-key">
+            <li><span class="lf-swatch bold"></span>Bold contour: AR detected from <span data-metric-name>IVTE</span></li>
+            <li><span class="lf-swatch light"></span>Light contours: <span data-metric-name>IVTE</span></li>
+          </ul>
+        </div>
+        <div class="lf-legend" data-legend></div>
+        <div class="lf-terms" role="group" aria-label="Shading">
+          {terms.map(([k, label]) => (
+            <button type="button" class={`term-chip k-${k}`} data-term={k} aria-pressed={k === 'pe' ? 'true' : 'false'}
+              title={k === 'fric' ? 'All subgrid momentum forcing; in MERRA-2: turbulence, gravity-wave drag and convection' : undefined}>{label}</button>
+          ))}
+        </div>
+      </section>
+    </div>
+
+    <div class="lf-controls">
+      <button type="button" class="lf-play" aria-label="Play">▶</button>
+      <input class="lf-slider" type="range" min="0" max="0" value="0" step="1" aria-label="Time" />
+      <span class="lf-time" aria-live="off">—</span>
+    </div>
+    <p class="lf-status" role="status">Loading data…</p>
+  </landfall-figure>
+  {Astro.slots.has('default') && <figcaption><slot /></figcaption>}
+</figure>
+
+<style>
+  .landfall { margin-top: 1rem; }
+  landfall-figure { display: block; }
+  landfall-figure:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
+  .lf-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  @media (max-width: 760px) { .lf-panels { grid-template-columns: 1fr; } }
+  .lf-panel { min-width: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+  .lf-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 0.75rem; min-height: 3.2rem; }
+  .lf-head h3 { margin: 0; font-size: 1.05rem; line-height: 1.25; }
+  .lf-kicker { display: block; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .lf-map { position: relative; width: 100%; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; background: #f3f4f6; }
+  .lf-map canvas, .lf-map svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .lf-map svg { pointer-events: none; }
+  .lf-readout {
+    position: absolute; left: 0.4rem; bottom: 0.35rem; padding: 0.1rem 0.4rem; border-radius: 3px;
+    background: rgba(255, 255, 255, 0.85); font-size: 0.75rem; font-variant-numeric: tabular-nums; display: none;
+  }
+  /* contour key, upper left of each map */
+  .lf-key {
+    position: absolute; top: 0.4rem; left: 0.4rem; margin: 0; padding: 0.2rem 0.45rem; list-style: none;
+    background: rgba(255, 255, 255, 0.85); border-radius: 3px; pointer-events: none;
+    font-family: var(--sans); font-size: 0.72rem; line-height: 1.45; color: var(--text);
+  }
+  .lf-key li { white-space: nowrap; }
+  .lf-swatch { display: inline-block; width: 1.3rem; margin-right: 0.4rem; vertical-align: middle; border-top: 2px solid #111827; }
+  .lf-swatch.light { border-top: 1px solid rgba(17, 24, 39, 0.55); }
+  /* colorbar: [bar + ticks] [units]. Each tick sits at its true position on the bar. */
+  .lf-legend { display: grid; grid-template-columns: 1fr auto; column-gap: 0.6rem; font-size: 0.75rem; color: var(--muted); }
+  /* legend contents are created by the script, so they need :global() */
+  .lf-legend :global(canvas) { display: block; width: 100%; height: 10px; border-radius: 2px; }
+  .lf-legend :global(.ticks) { position: relative; height: 1.45em; font-variant-numeric: tabular-nums; }
+  .lf-legend :global(.ticks i) { position: absolute; top: 0; width: 1px; height: 3px; margin-left: -0.5px; background: currentColor; }
+  .lf-legend :global(.ticks span) { position: absolute; top: 3px; white-space: nowrap; }
+  .lf-legend :global(.units) { grid-row: 1 / span 2; grid-column: 2; align-self: start; line-height: 10px; white-space: nowrap; }
+  .lf-terms .k-value { --c: var(--text); }
+  .lf-terms { display: flex; flex-wrap: wrap; gap: 0.35rem; font-size: 0.82rem; }
+  .lf-metric { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; font-size: 0.8rem; flex: none; }
+  .lf-metric button { font: inherit; border: 0; background: var(--bg); color: var(--text); padding: 0.15rem 0.7rem; cursor: pointer; }
+  .lf-metric button[aria-pressed='true'] { background: var(--text); color: var(--bg); }
+  .lf-controls { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.9rem; font-size: 0.9rem; }
+  .lf-play {
+    width: 2.25rem; height: 2.25rem; flex: none; border: 1px solid var(--border); border-radius: 999px;
+    background: var(--bg); color: var(--text); cursor: pointer;
+  }
+  .lf-slider { flex: 1; min-width: 4rem; accent-color: var(--accent); }
+  .lf-time { min-width: 8.5rem; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .lf-status { margin: 0.4rem 0 0; font-size: 0.8rem; color: var(--muted); min-height: 1.2em; }
+</style>
+
+<script>
+  import { contours } from 'd3-contour';
+  import { interpolateRdBu, interpolateBlues } from 'd3-scale-chromatic';
+
+  type Manifest = {
+    grid: { lon0: number; dlon: number; nx: number; lat0: number; dlat: number; ny: number };
+    times: string[];
+    frameLabel?: string;
+    fps?: number;
+    fields: Record<string, { file: string; encoding: string; vmax: number; units: string }>;
+    masks: Record<string, { file: string; encoding: string; level: number }>;
+    terms: Record<string, { scale: number; emax: number; encoding: string; files: Record<string, string> }>;
+    contours: Record<string, number[]>;
+    termUnits: string;
+  };
+  type Lines = Record<string, number[][][]>;
+
+  const TERM_LABEL: Record<string, string> = {
+    tend: 'total tendency', hflux: 'horizontal flux convergence', vflux: 'vertical flux convergence',
+    pe: 'PE → KE conversion', cond: 'vapor sources & sinks', fric: 'turbulence',
+  };
+  const FULL_NAME: Record<string, string> = {
+    IVTE: 'Integrated vapor transport energy', IKEV: 'Integrated kinetic energy of vapor',
+  };
+  type Tick = [pos: number, label: string]; // pos: 0..1 along the colorbar
+
+  // Odd n puts a LUT entry exactly at t = 0.5, so zero on a diverging scale is the true middle color.
+  function lut(interp: (t: number) => string, n = 257): Uint8ClampedArray {
+    const c = document.createElement('canvas').getContext('2d')!;
+    const out = new Uint8ClampedArray(n * 3);
+    for (let i = 0; i < n; i++) {
+      c.fillStyle = interp(i / (n - 1));
+      c.fillRect(0, 0, 1, 1);
+      const d = c.getImageData(0, 0, 1, 1).data;
+      out.set([d[0], d[1], d[2]], i * 3);
+    }
+    return out;
+  }
+
+  /** LUT index for x in 0..1 (clipped). */
+  function lutIndex(L: Uint8ClampedArray, x: number) {
+    const n = L.length / 3 - 1;
+    return Math.min(n, Math.max(0, Math.round(x * n)));
+  }
+
+  async function fetchBin(url: string): Promise<ArrayBuffer> {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`${res.status} ${url}`);
+    // Hosts that cannot serve binary files get the same gzip bytes as base64 text (*.b64.txt).
+    const buf = url.endsWith('.b64.txt')
+      ? Uint8Array.from(atob((await res.text()).trim()), (c) => c.charCodeAt(0)).buffer
+      : await res.arrayBuffer();
+    const b = new Uint8Array(buf);
+    if (b[0] !== 0x1f || b[1] !== 0x8b) return buf; // server already decoded it
+    const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'));
+    return new Response(stream).arrayBuffer();
+  }
+
+  class LandfallFigure extends HTMLElement {
+    private m!: Manifest;
+    private lines!: Lines;
+    private base = '';
+    private cache = new Map<string, Float32Array>();
+    private pending = new Map<string, Promise<Float32Array>>();
+    private t = 0;
+    private metric = 'IVTE';
+    private term = 'pe';
+    private timer: number | undefined;
+    private seqLut = lut(interpolateBlues);
+    private divLut = lut((t) => interpolateRdBu(1 - t));
+    private slider!: HTMLInputElement;
+    private playBtn!: HTMLButtonElement;
+    private status!: HTMLElement;
+    private ready = false;
+
+    async connectedCallback() {
+      this.base = this.dataset.base!;
+      this.slider = this.querySelector('.lf-slider')!;
+      this.playBtn = this.querySelector('.lf-play')!;
+      this.status = this.querySelector('.lf-status')!;
+      try {
+        const [m, lines] = await Promise.all([
+          fetch(this.base + 'manifest.json').then((r) => r.json()),
+          fetch(this.base + 'lines.json').then((r) => r.json()),
+        ]);
+        this.m = m;
+        this.lines = lines;
+        this.slider.max = String(m.times.length - 1);
+        const ar = (m.grid.nx * m.grid.dlon * Math.cos(this.midLat() * Math.PI / 180)) / (m.grid.ny * Math.abs(m.grid.dlat));
+        this.querySelectorAll<HTMLElement>('.lf-map').forEach((el) => (el.style.aspectRatio = String(ar)));
+        await Promise.all([this.field('IVT'), this.mask('IVT'), this.field('IVTE'), this.mask('IVTE'), this.termData('IVTE', 'pe')]);
+        this.ready = true;
+        this.status.textContent = '';
+        this.bind();
+        this.render();
+        this.observe();
+      } catch (e) {
+        this.status.textContent = 'Could not load the figure data.';
+        console.error(e);
+      }
+    }
+
+    disconnectedCallback() { this.pause(); }
+
+    // ---------- data ----------
+    private midLat() { const g = this.m.grid; return g.lat0 + g.dlat * (g.ny - 1) / 2; }
+
+    private load(key: string, file: string, decode: (b: ArrayBuffer) => Float32Array): Promise<Float32Array> {
+      if (this.cache.has(key)) return Promise.resolve(this.cache.get(key)!);
+      if (!this.pending.has(key)) {
+        this.pending.set(key, fetchBin(this.base + file).then((b) => {
+          const a = decode(b);
+          this.cache.set(key, a);
+          return a;
+        }));
+      }
+      return this.pending.get(key)!;
+    }
+
+    private field(k: string) {
+      const f = this.m.fields[k];
+      return this.load(`f:${k}`, f.file, (b) => {
+        const u = new Uint8Array(b), out = new Float32Array(u.length);
+        for (let i = 0; i < u.length; i++) {
+          const x = u[i] / 255;
+          out[i] = (f.encoding === 'u8-sqrt' ? x * x : x) * f.vmax;
+        }
+        return out;
+      });
+    }
+
+    private mask(k: string) {
+      return this.load(`m:${k}`, this.m.masks[k].file, (b) => {
+        const u = new Uint8Array(b), out = new Float32Array(u.length);
+        for (let i = 0; i < u.length; i++) out[i] = u[i] / 255;
+        return out;
+      });
+    }
+
+    private termData(metric: string, term: string) {
+      const t = this.m.terms[metric];
+      return this.load(`t:${metric}:${term}`, t.files[term], (b) => {
+        const s = new Int8Array(b), out = new Float32Array(s.length);
+        for (let i = 0; i < s.length; i++) {
+          const y = s[i] / 127;
+          out[i] = Math.sign(y) * y * y * t.emax;
+        }
+        return out;
+      });
+    }
+
+    // ---------- interaction ----------
+    private bind() {
+      this.playBtn.addEventListener('click', () => (this.playing ? this.pause() : this.play()));
+      this.slider.addEventListener('input', () => { this.pause(); this.t = Number(this.slider.value); this.render(); });
+      this.querySelectorAll<HTMLButtonElement>('[data-term]').forEach((b) =>
+        b.addEventListener('click', () => this.select(this.metric, b.dataset.term!)));
+      this.querySelectorAll<HTMLButtonElement>('[data-metric]').forEach((b) =>
+        b.addEventListener('click', () => this.select(b.dataset.metric!, this.term)));
+      this.addEventListener('keydown', (e) => {
+        if (e.target instanceof HTMLInputElement) return;
+        if (e.key === ' ') { e.preventDefault(); this.playing ? this.pause() : this.play(); }
+        else if (e.key === 'ArrowRight') { e.preventDefault(); this.step(1); }
+        else if (e.key === 'ArrowLeft') { e.preventDefault(); this.step(-1); }
+      });
+      this.querySelectorAll<HTMLElement>('.lf-map').forEach((map) => {
+        const panel = map.closest<HTMLElement>('[data-panel]')!.dataset.panel!;
+        const out = map.querySelector<HTMLElement>('.lf-readout')!;
+        map.addEventListener('pointermove', (e) => {
+          const r = map.getBoundingClientRect();
+          out.style.display = 'block';
+          out.textContent = this.readout(panel, (e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+        });
+        map.addEventListener('pointerleave', () => (out.style.display = 'none'));
+      });
+      let resizeTimer: number | undefined;
+      new ResizeObserver(() => { clearTimeout(resizeTimer); resizeTimer = window.setTimeout(() => this.render(), 50); }).observe(this);
+    }
+
+    private observe() {
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce) return;
+      const io = new IntersectionObserver((entries) => {
+        const vis = entries.some((en) => en.isIntersecting);
+        if (vis && !this.userPaused) this.play();
+        else if (!vis) this.pause(false);
+      }, { threshold: 0.3 });
+      io.observe(this);
+    }
+
+    private userPaused = false;
+    get playing() { return this.timer !== undefined; }
+
+    play() {
+      clearInterval(this.timer);
+      this.userPaused = false;
+      this.timer = window.setInterval(() => { this.t = (this.t + 1) % this.m.times.length; this.render(); }, 1000 / (this.m.fps ?? 6));
+      this.playBtn.textContent = '⏸';
+      this.playBtn.setAttribute('aria-label', 'Pause');
+    }
+
+    pause(byUser = true) {
+      clearInterval(this.timer);
+      this.timer = undefined;
+      if (byUser) this.userPaused = true;
+      this.playBtn.textContent = '▶';
+      this.playBtn.setAttribute('aria-label', 'Play');
+    }
+
+    step(d: number) {
+      this.pause();
+      const n = this.m.times.length;
+      this.t = (this.t + d + n) % n;
+      this.render();
+    }
+
+    private async select(metric: string, term: string) {
+      this.metric = metric;
+      this.term = term;
+      this.querySelectorAll<HTMLButtonElement>('[data-term]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.term === term)));
+      this.querySelectorAll<HTMLButtonElement>('[data-metric]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.metric === metric)));
+      const isValue = term === 'value';
+      const keys = [...(isValue ? [] : [`t:${metric}:${term}`]), `f:${metric}`, `m:${metric}`];
+      if (!keys.every((k) => this.cache.has(k))) this.status.textContent = 'Loading…';
+      await Promise.all([isValue ? null : this.termData(metric, term), this.field(metric), this.mask(metric)]);
+      if (this.metric === metric && this.term === term) { this.status.textContent = ''; this.render(); }
+    }
+
+    // ---------- drawing ----------
+    private frameSlice(a: Float32Array) {
+      const n = this.m.grid.nx * this.m.grid.ny;
+      return a.subarray(this.t * n, (this.t + 1) * n);
+    }
+
+    private render() {
+      if (!this.ready) return;
+      const { times } = this.m;
+      this.slider.value = String(this.t);
+      const stamp = times[this.t].replace('T', ' ').replace(/Z$/, ' UTC');
+      this.querySelector('.lf-time')!.textContent = this.m.frameLabel ? `${stamp} · 3-h mean` : stamp;
+      // left: IVT + IVT outline
+      const ivt = this.frameSlice(this.cache.get('f:IVT')!);
+      const vmaxIVT = this.m.fields.IVT.vmax;
+      this.drawPanel('ivt', ivt, this.seqLut, (v) => lutIndex(this.seqLut, v / vmaxIVT),
+        this.frameSlice(this.cache.get('m:IVT')!), null);
+      this.legend('ivt', this.seqLut, [[0, '0'], [0.5, String(vmaxIVT / 2)], [1, String(vmaxIVT)]], this.m.fields.IVT.units);
+      // right: the metric itself or a budget term, + metric outline + metric contours
+      const m = this.metric;
+      const isValue = this.term === 'value';
+      const tk = isValue ? `f:${m}` : `t:${m}:${this.term}`;
+      if (!this.cache.has(tk) || !this.cache.has(`f:${m}`)) return;
+      const data = this.frameSlice(this.cache.get(tk)!);
+      const outline = this.frameSlice(this.cache.get(`m:${m}`)!);
+      const thin = { field: this.frameSlice(this.cache.get(`f:${m}`)!), levels: this.m.contours[m] };
+      const title = this.querySelector('.lf-vke-title')!;
+      if (isValue) {
+        // Linear color scale, as for IVT on the left.
+        const { vmax, units } = this.m.fields[m];
+        this.drawPanel('vke', data, this.seqLut, (v) => lutIndex(this.seqLut, v / vmax), outline, thin);
+        this.legend('vke', this.seqLut, [[0, '0'], [0.5, String(vmax / 2)], [1, String(vmax)]], units);
+        title.textContent = FULL_NAME[m];
+      } else {
+        const scale = this.m.terms[m].scale;
+        this.drawPanel('vke', data, this.divLut, (v) => lutIndex(this.divLut, v / scale * 0.5 + 0.5), outline, thin);
+        this.legend('vke', this.divLut, [[0, `−${scale}`], [0.5, '0'], [1, `+${scale}`]], this.m.termUnits);
+        title.textContent = `${m} tendency: ${TERM_LABEL[this.term]}`;
+      }
+      this.querySelectorAll('[data-metric-name]').forEach((el) => (el.textContent = this.metric));
+    }
+
+    private drawPanel(panel: string, data: Float32Array, L: Uint8ClampedArray,
+                      index: (v: number) => number, mask: Float32Array,
+                      thin: { field: Float32Array; levels: number[] } | null) {
+      const root = this.querySelector<HTMLElement>(`[data-panel="${panel}"]`)!;
+      const map = root.querySelector<HTMLElement>('.lf-map')!;
+      const canvas = map.querySelector('canvas')!;
+      const svg = map.querySelector('svg')!;
+      const { nx, ny } = this.m.grid;
+      const W = map.clientWidth, H = map.clientHeight;
+      if (!W || !H) return;
+      const dpr = window.devicePixelRatio || 1;
+      if (canvas.width !== Math.round(W * dpr)) { canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr); }
+      // raster at grid resolution, then scaled smoothly
+      const off = new OffscreenCanvas(nx, ny);
+      const octx = off.getContext('2d')!;
+      const img = octx.createImageData(nx, ny);
+      for (let i = 0; i < nx * ny; i++) {
+        const c = index(data[i]) * 3;
+        img.data[i * 4] = L[c]; img.data[i * 4 + 1] = L[c + 1]; img.data[i * 4 + 2] = L[c + 2]; img.data[i * 4 + 3] = 255;
+      }
+      octx.putImageData(img, 0, 0);
+      const ctx = canvas.getContext('2d')!;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(off, 0, 0, canvas.width, canvas.height);
+
+      // overlays (SVG, in grid-extent coordinates)
+      const sx = W / nx, sy = H / ny;
+      const g = this.m.grid;
+      const lonL = g.lon0 - g.dlon / 2, latT = g.lat0 - g.dlat / 2;
+      const proj = (lon: number, lat: number) => [((lon - lonL) / g.dlon) * sx, ((lat - latT) / g.dlat) * sy];
+      const pathOf = (rings: number[][][]) =>
+        rings.map((r) => 'M' + r.map(([x, y]) => `${(x * sx).toFixed(1)},${(y * sy).toFixed(1)}`).join('L') + 'Z').join('');
+      const geoPath = (segs: number[][][]) =>
+        segs.map((s) => 'M' + s.map(([lo, la]) => proj(lo, la).map((v) => v.toFixed(1)).join(',')).join('L')).join('');
+      const outline = contours().size([nx, ny]).thresholds([0.5])(Array.from(mask))[0];
+      let thinPaths = '';
+      if (thin) {
+        for (const c of contours().size([nx, ny]).thresholds(thin.levels)(Array.from(thin.field))) {
+          thinPaths += c.coordinates.map((poly) => pathOf(poly as number[][][])).join('');
+        }
+      }
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML =
+        `<path d="${geoPath(this.lines.states)}" fill="none" stroke="#6b7280" stroke-width="0.5" stroke-opacity="0.6"/>` +
+        `<path d="${geoPath(this.lines.countries)}" fill="none" stroke="#4b5563" stroke-width="0.7"/>` +
+        `<path d="${geoPath(this.lines.coast)}" fill="none" stroke="#374151" stroke-width="0.9"/>` +
+        (thin ? `<path d="${thinPaths}" fill="none" stroke="#111827" stroke-width="0.6" stroke-opacity="0.55"/>` : '') +
+        `<path d="${outline.coordinates.map((poly) => pathOf(poly as number[][][])).join('')}" fill="none" stroke="#111827" stroke-width="2" stroke-linejoin="round"/>`;
+    }
+
+    private legend(panel: string, L: Uint8ClampedArray, ticks: Tick[], units: string) {
+      const el = this.querySelector<HTMLElement>(`[data-panel="${panel}"] [data-legend]`)!;
+      const n = L.length / 3;
+      let cv = el.querySelector('canvas');
+      if (!cv) {
+        el.innerHTML = `<canvas width="${n}" height="1"></canvas><div class="ticks"></div><div class="units"></div>`;
+        cv = el.querySelector('canvas')!;
+      }
+      const ctx = cv.getContext('2d')!;
+      const img = ctx.createImageData(n, 1);
+      for (let i = 0; i < n; i++) img.data.set([L[i * 3], L[i * 3 + 1], L[i * 3 + 2], 255], i * 4);
+      ctx.putImageData(img, 0, 0);
+      // Mark at the exact position; label centred on it, except at the ends where it is flush with the bar.
+      el.querySelector('.ticks')!.innerHTML = ticks.map(([p, label]) => {
+        const shift = p <= 0 ? 0 : p >= 1 ? -100 : -50;
+        return `<i style="left:${p * 100}%"></i><span style="left:${p * 100}%;transform:translateX(${shift}%)">${label}</span>`;
+      }).join('');
+      el.querySelector('.units')!.textContent = units;
+    }
+
+    private readout(panel: string, fx: number, fy: number) {
+      const { nx, ny, lon0, dlon, lat0, dlat } = this.m.grid;
+      const i = Math.min(nx - 1, Math.max(0, Math.floor(fx * nx)));
+      const j = Math.min(ny - 1, Math.max(0, Math.floor(fy * ny)));
+      const k = j * nx + i;
+      const lon = lon0 + i * dlon, lat = lat0 + j * dlat;
+      const where = `${Math.abs(lat).toFixed(1)}°N ${Math.abs(lon).toFixed(1)}°W`;
+      if (panel === 'ivt') {
+        const v = this.frameSlice(this.cache.get('f:IVT')!)[k];
+        return `${where}  IVT ${v.toFixed(0)} ${this.m.fields.IVT.units}`;
+      }
+      if (this.term === 'value') {
+        const v = this.frameSlice(this.cache.get(`f:${this.metric}`)!)[k];
+        return `${where}  ${this.metric} ${v.toFixed(v >= 1000 ? 0 : 1)} ${this.m.fields[this.metric].units}`;
+      }
+      const a = this.cache.get(`t:${this.metric}:${this.term}`);
+      if (!a) return where;
+      return `${where}  ${this.frameSlice(a)[k].toFixed(2)} ${this.m.termUnits}`;
+    }
+  }
+
+  customElements.define('landfall-figure', LandfallFigure);
+</script>

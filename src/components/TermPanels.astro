@@ -1,0 +1,53 @@
+---
+// Container for <Term> panels. Panels are hidden until the reader picks a term,
+// either by clicking it in an equation or with the row of buttons.
+// Write equation terms as \term{<kind>}{...}, where <kind> matches a <Term kind="...">.
+// Without JavaScript, all panels are shown.
+---
+
+<div class="terms" data-term-panels>
+  <div class="term-picker" hidden>
+    <span class="term-hint">Click a term in the equation, or pick one:</span>
+  </div>
+  <slot />
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-term-panels]').forEach((root) => {
+    const panels = [...root.querySelectorAll<HTMLElement>('[data-term-panel]')];
+    const picker = root.querySelector<HTMLElement>('.term-picker')!;
+    const buttons = new Map<string, HTMLButtonElement>();
+
+    for (const panel of panels) {
+      const kind = panel.dataset.termPanel!;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `term-chip k-${kind}`;
+      btn.textContent = panel.querySelector('.term-name')?.textContent ?? kind;
+      btn.setAttribute('aria-expanded', 'false');
+      btn.setAttribute('aria-controls', panel.id);
+      btn.addEventListener('click', () => toggle(kind));
+      picker.append(btn);
+      buttons.set(kind, btn);
+      panel.hidden = true;
+    }
+    picker.hidden = false;
+
+    // Terms in display equations that belong to this set of panels.
+    const terms = [...document.querySelectorAll<HTMLElement>('.katex-display [data-term]')].filter((el) =>
+      buttons.has(el.dataset.term!),
+    );
+    for (const el of terms) {
+      el.classList.add('eq-term');
+      el.addEventListener('click', () => toggle(el.dataset.term!));
+    }
+
+    let open: string | null = null;
+    function toggle(kind: string) {
+      open = open === kind ? null : kind;
+      for (const panel of panels) panel.hidden = panel.dataset.termPanel !== open;
+      for (const [k, btn] of buttons) btn.setAttribute('aria-expanded', String(k === open));
+      for (const el of terms) el.classList.toggle('is-active', el.dataset.term === open);
+    }
+  });
+</script>

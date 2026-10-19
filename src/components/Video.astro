@@ -1,0 +1,55 @@
+---
+// Video animation with native player controls. Put files in public/videos/.
+// Give several encodings and the browser picks the first one it supports:
+//   <Video sources={['videos/ar_event.webm', 'videos/ar_event.mp4']} poster="videos/ar_event.jpg" label="Movie 1">...</Video>
+import { asset } from '../lib/asset';
+
+interface Props {
+  sources: string | string[];
+  poster?: string;
+  label?: string;
+  /** Silent looping playback, like a GIF. Disabled for users who prefer reduced motion. */
+  loop?: boolean;
+  autoplay?: boolean;
+  wide?: boolean;
+  /** Accessible description of what the animation shows. */
+  ariaLabel?: string;
+}
+
+const { sources, poster, label, loop = false, autoplay = false, wide = false, ariaLabel } = Astro.props;
+const list = Array.isArray(sources) ? sources : [sources];
+const mime = (src: string) => (src.endsWith('.webm') ? 'video/webm' : src.endsWith('.mov') ? 'video/quicktime' : 'video/mp4');
+---
+
+<figure class:list={['figure', { wide }]}>
+  <video
+    controls
+    playsinline
+    preload="metadata"
+    poster={poster && asset(poster)}
+    loop={loop}
+    muted={autoplay}
+    data-autoplay={autoplay ? '' : undefined}
+    aria-label={ariaLabel}
+  >
+    {list.map((src) => <source src={asset(src)} type={mime(src)} />)}
+    Your browser does not support embedded video. <a href={asset(list[0])}>Download the animation</a>.
+  </video>
+  {
+    (label || Astro.slots.has('default')) && (
+      <figcaption>
+        {label && <span class="label">{label}. </span>}
+        <slot />
+      </figcaption>
+    )
+  }
+</figure>
+
+<script>
+  // Autoplay only when the reader hasn't asked for reduced motion.
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.querySelectorAll<HTMLVideoElement>('video[data-autoplay]').forEach((v) => {
+      v.play().catch(() => {});
+    });
+  }
+</script>
