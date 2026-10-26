@@ -8,6 +8,7 @@ import Derivation from '../components/Derivation.astro';
 import Term from '../components/Term.astro';
 import TermPanels from '../components/TermPanels.astro';
 import LandfallFigure from '../components/LandfallFigure.astro';
+import FrequencyCompare from '../components/FrequencyCompare.astro';
 import DatasetRepr from '../components/DatasetRepr.astro';
 import kevBudgetRepr from '../data/kev_budget_repr.html?raw';
 
@@ -96,7 +97,9 @@ $$
 
 Swap either one into an IVT-based detection algorithm, retune the threshold to match the global AR frequency, and the detected ARs are nearly identical. With IVTE, AR frequency changes by only 2–4 days per year, less than the ~10 days per year separating two standard IVT algorithms [[1]](#ref-1). IKEV detects slightly fewer ARs at low latitudes and more at high southern latitudes, where the jet is strong [[2]](#ref-2).
 
-{/* FIGURE SLOT (interactive): AR frequency from IVT vs IKEV vs IVTE, after Zhang et al. (2026) Fig. 1. A toggle or slider would make the near-identity obvious. */}
+<FrequencyCompare size={0.9}>
+  Mean AR frequency over 2010–2019 (MERRA-2), detected from IVT (left) and from IVTE or IKEV (right). Drag the divider, or focus it and use the arrow keys, to compare the two maps. **Difference** shows IVTE (or IKEV) minus IVT instead: red where the vapor kinetic energy metric detects more AR days, blue where it detects fewer. Each detection threshold is tuned so the global AR frequency is about the same. The tropics (within 20° of the equator) are excluded from detection. After Zhang et al. (2026), Fig. 1 [[2]](#ref-2).
+</FrequencyCompare>
 
 ## The budget equations
 

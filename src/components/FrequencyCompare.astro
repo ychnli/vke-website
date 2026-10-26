@@ -1,0 +1,393 @@
+---
+// AR frequency climatologies from IVT (left) and IVTE or IKEV (right), compared with a
+// draggable divider, after Zhang et al. (2026) Fig. 1. "Difference" swaps both for one map of
+// IVTE (or IKEV) minus IVT. Data: public/data/<case>/manifest.json,
+// written by analysis/scripts/06_export_climatology.py.
+//   <FrequencyCompare size={0.9}>Caption…</FrequencyCompare>
+// `size` scales the figure's full width (1 = 62rem); it never exceeds the screen.
+import { asset } from '../lib/asset';
+
+interface Props {
+  /** Folder under public/data/ written by analysis/scripts/06_export_climatology.py */
+  case?: string;
+  /** Width relative to the default wide-figure width (62rem). */
+  size?: number;
+}
+const { case: caseName = 'ar-frequency-2010-2019', size = 1 } = Astro.props;
+const base = asset(`data/${caseName}/`);
+---
+
+<figure class="figure wide arfreq" style={`--fig-scale: ${size}`}>
+  <ar-frequency data-base={base} role="group" aria-label="AR frequency maps from IVT and from vapor kinetic energy, compared with a draggable divider">
+    <header class="af-head">
+      <h3>AR frequency, 2010–2019</h3>
+      <div class="af-controls">
+        <button type="button" class="af-diff" aria-pressed="false">Difference</button>
+        <div class="af-metric" role="group" aria-label="Compared with IVT">
+          <button type="button" data-metric="IVTE" aria-pressed="true">IVTE</button>
+          <button type="button" data-metric="IKEV" aria-pressed="false">IKEV</button>
+        </div>
+      </div>
+    </header>
+    <div class="af-map">
+      <canvas data-side="left"></canvas>
+      <canvas data-side="right"></canvas>
+      <svg aria-hidden="true"></svg>
+      <span class="af-tag" data-side="left">IVT</span>
+      <span class="af-tag" data-side="right" data-metric-name>IVTE</span>
+      <div class="af-divider" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"
+           aria-label="Divider: drag left to show more of the right-hand map">
+        <span class="af-knob" aria-hidden="true"></span>
+      </div>
+    </div>
+    <div class="af-foot">
+      <div class="af-legend"></div>
+      <p class="af-readout" aria-live="off"></p>
+    </div>
+    <p class="af-status" role="status">Loading data…</p>
+  </ar-frequency>
+  {Astro.slots.has('default') && <figcaption><slot /></figcaption>}
+</figure>
+
+<style>
+  ar-frequency { display: block; font-family: var(--sans); }
+  .af-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 0.75rem; margin-bottom: 0.5rem; }
+  .af-head h3 { margin: 0; font-size: 1.05rem; line-height: 1.25; }
+  .af-controls { display: flex; align-items: center; gap: 0.5rem; flex: none; }
+  .af-diff {
+    font: inherit; font-size: 0.8rem; border: 1px solid var(--border); border-radius: 999px;
+    background: var(--bg); color: var(--text); padding: 0.15rem 0.7rem; cursor: pointer;
+  }
+  .af-diff[aria-pressed='true'] { background: var(--text); border-color: var(--text); color: var(--bg); }
+  .af-metric { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; font-size: 0.8rem; flex: none; }
+  .af-metric button { font: inherit; border: 0; background: var(--bg); color: var(--text); padding: 0.15rem 0.7rem; cursor: pointer; }
+  .af-metric button[aria-pressed='true'] { background: var(--text); color: var(--bg); }
+  /* Both maps fill the frame; the right one is clipped to the right of the divider (--pos). */
+  .af-map {
+    --pos: 50%;
+    position: relative; width: 100%; border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+    background: #f7fbff; cursor: ew-resize; touch-action: pan-y; user-select: none;
+  }
+  .af-map canvas, .af-map svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .af-map canvas[data-side='right'] { clip-path: inset(0 0 0 var(--pos)); }
+  .af-map svg { pointer-events: none; }
+  /* Difference mode: one map (drawn on the left canvas), no divider. */
+  .af-map.is-diff { cursor: crosshair; background: #f7f7f7; }
+  .af-map.is-diff canvas[data-side='right'], .af-map.is-diff .af-divider, .af-map.is-diff .af-tag[data-side='right'] { display: none; }
+  .af-map :global(.grat) { stroke: #9ca3af; stroke-width: 0.5; stroke-dasharray: 2 3; fill: none; }
+  .af-map :global(.coast) { stroke: #4b5563; stroke-width: 0.6; fill: none; }
+  .af-map :global(.tick) { font-size: 10px; fill: #4b5563; paint-order: stroke; stroke: rgba(255, 255, 255, 0.85); stroke-width: 3px; }
+  .af-tag {
+    position: absolute; top: 0.4rem; padding: 0.1rem 0.5rem; border-radius: 3px; pointer-events: none;
+    background: rgba(255, 255, 255, 0.88); font-size: 0.8rem; font-weight: 600; transition: opacity 0.15s;
+  }
+  .af-tag[data-side='left'] { left: 0.4rem; }
+  .af-tag[data-side='right'] { right: 0.4rem; }
+  .af-tag.is-hidden { opacity: 0; }
+  .af-divider {
+    position: absolute; top: 0; bottom: 0; left: var(--pos); width: 2.75rem; margin-left: -1.375rem;
+    display: flex; align-items: center; justify-content: center; outline: none;
+  }
+  .af-divider::before {
+    content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; margin-left: -1px;
+    background: #fff; box-shadow: 0 0 0 1px rgba(17, 24, 39, 0.35);
+  }
+  .af-knob {
+    position: relative; width: 2rem; height: 2rem; border-radius: 999px; background: #fff;
+    border: 1px solid rgba(17, 24, 39, 0.35); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  }
+  /* two chevrons, pointing outward */
+  .af-knob::before, .af-knob::after {
+    content: ''; position: absolute; top: 50%; width: 0.4rem; height: 0.4rem; margin-top: -0.2rem;
+    border: solid var(--text); border-width: 0 0 1.5px 1.5px;
+  }
+  .af-knob::before { left: 0.45rem; transform: rotate(45deg); }
+  .af-knob::after { right: 0.45rem; transform: rotate(-135deg); }
+  .af-divider:focus-visible .af-knob { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* colorbar on the left, values under the pointer on the right */
+  .af-foot { display: grid; grid-template-columns: minmax(10rem, 22rem) 1fr; gap: 1.5rem; align-items: start; margin-top: 0.5rem; }
+  @media (max-width: 560px) { .af-foot { grid-template-columns: 1fr; gap: 0.4rem; } }
+  .af-legend { display: grid; grid-template-columns: 1fr auto; column-gap: 0.6rem; font-size: 0.75rem; color: var(--muted); }
+  .af-legend :global(canvas) { display: block; width: 100%; height: 10px; border-radius: 2px; }
+  .af-legend :global(.ticks) { position: relative; height: 1.45em; font-variant-numeric: tabular-nums; }
+  .af-legend :global(.ticks i) { position: absolute; top: 0; width: 1px; height: 3px; margin-left: -0.5px; background: currentColor; }
+  .af-legend :global(.ticks span) { position: absolute; top: 3px; white-space: nowrap; }
+  .af-legend :global(.units) { grid-row: 1 / span 2; grid-column: 2; align-self: start; line-height: 10px; white-space: nowrap; }
+  .af-readout { margin: 0; text-align: right; font-size: 0.8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .af-readout :global(b) { color: var(--text); font-weight: 600; }
+  @media (max-width: 560px) { .af-readout { text-align: left; } }
+  .af-status { margin: 0.4rem 0 0; font-size: 0.8rem; color: var(--muted); }
+  .af-status:empty { display: none; }
+</style>
+
+<script>
+  import { interpolateBlues, interpolateRdBu } from 'd3-scale-chromatic';
+  import { fetchBin } from '../lib/fetch-bin';
+
+  type Manifest = {
+    grid: { lon0: number; dlon: number; nx: number; lat0: number; dlat: number; ny: number };
+    units: string;
+    colorMax: number;
+    diffMax: number;
+    fields: Record<string, { file: string; encoding: string; vmax: number; globalMean: number }>;
+  };
+  type Lines = { coast: number[][][] };
+
+  const STEP = 0.02; // divider step for the arrow keys (fraction of the width)
+
+  // Odd n puts a LUT entry exactly at t = 0.5, so zero difference is the true middle color.
+  function lut(interp: (t: number) => string, n = 257): Uint8ClampedArray {
+    const c = document.createElement('canvas').getContext('2d')!;
+    const out = new Uint8ClampedArray(n * 3);
+    for (let i = 0; i < n; i++) {
+      c.fillStyle = interp(i / (n - 1));
+      c.fillRect(0, 0, 1, 1);
+      const d = c.getImageData(0, 0, 1, 1).data;
+      out.set([d[0], d[1], d[2]], i * 3);
+    }
+    return out;
+  }
+
+  /** LUT index for x in 0..1 (clipped). */
+  function lutIndex(L: Uint8ClampedArray, x: number) {
+    const n = L.length / 3 - 1;
+    return Math.min(n, Math.max(0, Math.round(x * n)));
+  }
+
+  /** Signed, with a true minus sign; values that round to zero get no sign. */
+  const signed = (v: number, digits = 0) => {
+    const r = +v.toFixed(digits);
+    return (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r).toFixed(digits);
+  };
+
+  const fmtLat = (v: number) => (v === 0 ? '0°' : `${Math.abs(v)}°${v > 0 ? 'N' : 'S'}`);
+  const fmtLon = (v: number) => {
+    const e = ((v + 180) % 360 + 360) % 360 - 180; // −180..180
+    return e === 0 || Math.abs(e) === 180 ? `${Math.abs(e)}°` : `${Math.abs(e)}°${e > 0 ? 'E' : 'W'}`;
+  };
+
+  class FrequencyCompare extends HTMLElement {
+    private m!: Manifest;
+    private lines!: Lines;
+    private base = '';
+    private data = new Map<string, Float32Array>();
+    private metric = 'IVTE';
+    private pos = 0.5; // divider position, 0 (all right-hand map) .. 1 (all IVT)
+    private diff = false; // one map of metric − IVT instead of the divider
+    private colors = lut(interpolateBlues);
+    private divColors = lut((t) => interpolateRdBu(1 - t)); // red: more AR days than with IVT
+    private mapEl!: HTMLElement;
+    private divider!: HTMLElement;
+    private readoutEl!: HTMLElement;
+    private hover: [fx: number, fy: number] | null = null;
+
+    async connectedCallback() {
+      this.base = this.dataset.base!;
+      this.mapEl = this.querySelector('.af-map')!;
+      this.divider = this.querySelector('.af-divider')!;
+      this.readoutEl = this.querySelector('.af-readout')!;
+      const status = this.querySelector('.af-status')!;
+      try {
+        const [m, lines] = await Promise.all([
+          fetch(this.base + 'manifest.json').then((r) => r.json()),
+          fetch(this.base + 'lines.json').then((r) => r.json()),
+        ]);
+        this.m = m;
+        this.lines = lines;
+        const g = m.grid;
+        this.mapEl.style.aspectRatio = String((g.nx * g.dlon) / (g.ny * Math.abs(g.dlat)));
+        await Promise.all(Object.keys(m.fields).map((k) => this.field(k)));
+        status.textContent = '';
+        this.bind();
+        this.render();
+      } catch (e) {
+        status.textContent = 'Could not load the figure data.';
+        console.error(e);
+      }
+    }
+
+    /** metric − IVT, days/year */
+    private difference(k: string) {
+      const key = `${k}-IVT`;
+      if (!this.data.has(key)) {
+        const a = this.data.get(k)!, b = this.data.get('IVT')!;
+        this.data.set(key, a.map((v, i) => v - b[i]));
+      }
+      return this.data.get(key)!;
+    }
+
+    private async field(k: string) {
+      const f = this.m.fields[k];
+      const u = new Uint8Array(await fetchBin(this.base + f.file));
+      const out = new Float32Array(u.length);
+      for (let i = 0; i < u.length; i++) out[i] = (u[i] / 255) * f.vmax;
+      this.data.set(k, out);
+    }
+
+    // ---------- interaction ----------
+    private bind() {
+      this.querySelectorAll<HTMLButtonElement>('[data-metric]').forEach((b) =>
+        b.addEventListener('click', () => {
+          this.metric = b.dataset.metric!;
+          this.querySelectorAll<HTMLButtonElement>('[data-metric]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+          this.querySelectorAll('[data-metric-name]').forEach((el) => (el.textContent = this.metric));
+          this.render();
+        }));
+      const diffBtn = this.querySelector<HTMLButtonElement>('.af-diff')!;
+      diffBtn.addEventListener('click', () => {
+        this.diff = !this.diff;
+        diffBtn.setAttribute('aria-pressed', String(this.diff));
+        this.render();
+      });
+      // Press anywhere on the map to move the divider there, then drag.
+      const map = this.mapEl;
+      const at = (e: PointerEvent): [number, number] => {
+        const r = map.getBoundingClientRect();
+        return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height];
+      };
+      map.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0 || this.diff) return;
+        map.setPointerCapture(e.pointerId);
+        this.setPos(at(e)[0]);
+        if (e.target !== this.divider && !this.divider.contains(e.target as Node)) e.preventDefault();
+        this.divider.focus({ preventScroll: true });
+      });
+      map.addEventListener('pointermove', (e) => {
+        if (map.hasPointerCapture(e.pointerId)) this.setPos(at(e)[0]);
+        this.hover = at(e);
+        this.readout();
+      });
+      map.addEventListener('pointerleave', () => { this.hover = null; this.readout(); });
+      this.divider.addEventListener('keydown', (e) => {
+        const d = { ArrowLeft: -STEP, ArrowRight: STEP, PageDown: -5 * STEP, PageUp: 5 * STEP }[e.key];
+        if (d !== undefined) this.setPos(this.pos + d);
+        else if (e.key === 'Home') this.setPos(0);
+        else if (e.key === 'End') this.setPos(1);
+        else return;
+        e.preventDefault();
+      });
+      let resizeTimer: number | undefined;
+      new ResizeObserver(() => { clearTimeout(resizeTimer); resizeTimer = window.setTimeout(() => this.render(), 50); }).observe(this);
+    }
+
+    private setPos(p: number) {
+      this.pos = Math.min(1, Math.max(0, p));
+      this.mapEl.style.setProperty('--pos', `${this.pos * 100}%`);
+      this.divider.setAttribute('aria-valuenow', String(Math.round(this.pos * 100)));
+      this.divider.setAttribute('aria-valuetext', `${Math.round(this.pos * 100)}% IVT, ${Math.round((1 - this.pos) * 100)}% ${this.metric}`);
+      // hide a map's name once its side is too narrow to hold it
+      const left = this.querySelector('.af-tag[data-side="left"]')!;
+      left.textContent = this.diff ? `${this.metric} − IVT` : 'IVT';
+      left.classList.toggle('is-hidden', !this.diff && this.pos < 0.08);
+      this.querySelector('.af-tag[data-side="right"]')!.classList.toggle('is-hidden', this.pos > 0.92);
+    }
+
+    // ---------- drawing ----------
+    private render() {
+      if (!this.data.size) return;
+      const left = this.querySelector<HTMLCanvasElement>('canvas[data-side="left"]')!;
+      const { colorMax, diffMax } = this.m;
+      this.mapEl.classList.toggle('is-diff', this.diff);
+      if (this.diff) {
+        this.drawMap(left, this.difference(this.metric), this.divColors, (v) => v / diffMax * 0.5 + 0.5);
+        this.legend(this.divColors, -diffMax, diffMax, 10);
+      } else {
+        this.drawMap(left, this.data.get('IVT')!, this.colors, (v) => v / colorMax);
+        this.drawMap(this.querySelector('canvas[data-side="right"]')!, this.data.get(this.metric)!, this.colors, (v) => v / colorMax);
+        this.legend(this.colors, 0, colorMax, 20);
+      }
+      this.drawOverlay();
+      this.setPos(this.pos);
+      this.readout();
+    }
+
+    /** `scale` maps a value to 0..1 along the color scale L. */
+    private drawMap(canvas: HTMLCanvasElement, data: Float32Array, L: Uint8ClampedArray, scale: (v: number) => number) {
+      const { nx, ny } = this.m.grid;
+      const W = this.mapEl.clientWidth, H = this.mapEl.clientHeight;
+      if (!W || !H) return;
+      const dpr = window.devicePixelRatio || 1;
+      if (canvas.width !== Math.round(W * dpr)) { canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr); }
+      // raster at grid resolution, then scaled smoothly
+      const off = new OffscreenCanvas(nx, ny);
+      const octx = off.getContext('2d')!;
+      const img = octx.createImageData(nx, ny);
+      for (let i = 0; i < nx * ny; i++) {
+        const c = lutIndex(L, scale(data[i])) * 3;
+        img.data[i * 4] = L[c]; img.data[i * 4 + 1] = L[c + 1]; img.data[i * 4 + 2] = L[c + 2]; img.data[i * 4 + 3] = 255;
+      }
+      octx.putImageData(img, 0, 0);
+      const ctx = canvas.getContext('2d')!;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(off, 0, 0, canvas.width, canvas.height);
+    }
+
+    /** Coastlines, graticule and its labels, shared by both maps. */
+    private drawOverlay() {
+      const svg = this.mapEl.querySelector('svg')!;
+      const W = this.mapEl.clientWidth, H = this.mapEl.clientHeight;
+      const g = this.m.grid;
+      const lonL = g.lon0 - g.dlon / 2, latT = g.lat0 - g.dlat / 2;
+      const sx = W / (g.nx * g.dlon), sy = H / (g.ny * g.dlat);
+      const X = (lon: number) => (lon - lonL) * sx, Y = (lat: number) => (lat - latT) * sy;
+      const coast = this.lines.coast
+        .map((s) => 'M' + s.map(([lo, la]) => `${X(lo).toFixed(1)},${Y(la).toFixed(1)}`).join('L')).join('');
+      const lats = [-60, -30, 0, 30, 60], lons = [60, 120, 180, 240, 300];
+      const grat = lats.map((la) => `M0,${Y(la).toFixed(1)}H${W}`).join('') + lons.map((lo) => `M${X(lo).toFixed(1)},0V${H}`).join('');
+      // On small maps the map names would cover the 60° labels and the longitude labels crowd.
+      const small = W < 480;
+      const labels =
+        lats.filter((la) => !small || Math.abs(la) < 60).map((la) => `<text class="tick" x="4" y="${Y(la)}" dy="1.1em">${fmtLat(la)}</text>`).join('') +
+        (small ? '' : lons.map((lo) => `<text class="tick" x="${X(lo)}" y="${H - 5}" text-anchor="middle">${fmtLon(lo)}</text>`).join(''));
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.innerHTML = `<path class="grat" d="${grat}"/><path class="coast" d="${coast}"/>${labels}`;
+    }
+
+    /** Colorbar for L spanning lo..hi, with a tick every `step`. Values beyond the ends take the end colors. */
+    private legend(L: Uint8ClampedArray, lo: number, hi: number, step: number) {
+      const el = this.querySelector<HTMLElement>('.af-legend')!;
+      const n = L.length / 3;
+      el.innerHTML = `<canvas width="${n}" height="1"></canvas><div class="ticks"></div><div class="units"></div>`;
+      const ctx = el.querySelector('canvas')!.getContext('2d')!;
+      const img = ctx.createImageData(n, 1);
+      for (let i = 0; i < n; i++) img.data.set([L[i * 3], L[i * 3 + 1], L[i * 3 + 2], 255], i * 4);
+      ctx.putImageData(img, 0, 0);
+      const ticks = Array.from({ length: Math.round((hi - lo) / step) + 1 }, (_, i) => lo + i * step);
+      // Mark at the exact position; label centred on it, except at the ends where it is flush with the bar.
+      el.querySelector('.ticks')!.innerHTML = ticks.map((t) => {
+        const p = (t - lo) / (hi - lo), shift = p <= 0 ? 0 : p >= 1 ? -100 : -50;
+        const label = lo < 0 ? signed(t) : String(t);
+        return `<i style="left:${p * 100}%"></i><span style="left:${p * 100}%;transform:translateX(${shift}%)">${label}</span>`;
+      }).join('');
+      el.querySelector('.units')!.textContent = lo < 0 ? `${this.metric} − IVT, ${this.m.units}` : this.m.units;
+    }
+
+    /** Values under the pointer, or the global means when the pointer is off the map. */
+    private readout() {
+      const k = this.metric, f = this.m.fields;
+      if (!this.hover && this.diff) {
+        this.readoutEl.innerHTML = `Global mean: ${k} − IVT <b>${signed(f[k].globalMean - f.IVT.globalMean, 1)}</b> ${this.m.units}`;
+        return;
+      }
+      if (!this.hover) {
+        this.readoutEl.innerHTML = `Global mean: IVT <b>${f.IVT.globalMean.toFixed(1)}</b>, ${k} <b>${f[k].globalMean.toFixed(1)}</b> ${this.m.units}`;
+        return;
+      }
+      const { nx, ny, lon0, dlon, lat0, dlat } = this.m.grid;
+      const i = Math.min(nx - 1, Math.max(0, Math.floor(this.hover[0] * nx)));
+      const j = Math.min(ny - 1, Math.max(0, Math.floor(this.hover[1] * ny)));
+      const lat = lat0 + j * dlat, lon = lon0 + i * dlon;
+      const e = ((lon + 180) % 360) - 180;
+      const where = `${Math.abs(lat).toFixed(1)}°${lat >= 0 ? 'N' : 'S'} ${Math.abs(e).toFixed(1)}°${e >= 0 ? 'E' : 'W'}`;
+      const v = (key: string) => this.data.get(key)![j * nx + i].toFixed(0);
+      if (this.diff) {
+        this.readoutEl.innerHTML = `${where}: ${k} − IVT <b>${signed(this.difference(k)[j * nx + i])}</b> ${this.m.units} (IVT ${v('IVT')}, ${k} ${v(k)})`;
+        return;
+      }
+      this.readoutEl.innerHTML = `${where}: IVT <b>${v('IVT')}</b>, ${k} <b>${v(k)}</b> ${this.m.units}`;
+    }
+  }
+
+  customElements.define('ar-frequency', FrequencyCompare);
+</script>

@@ -1,0 +1,37 @@
+{
+ "case": "AR frequency, 2010-2019 (MERRA-2)",
+ "grid": {
+  "lon0": 0.0,
+  "dlon": 0.625,
+  "nx": 576,
+  "lat0": 75.0,
+  "dlat": -0.5,
+  "ny": 301
+ },
+ "units": "days/year",
+ "colorMax": 120.0,
+ "diffMax": 20.0,
+ "fields": {
+  "IVT": {
+   "file": "ivt.bin.gz",
+   "encoding": "u8-linear",
+   "vmax": 150.0,
+   "globalMean": 16.78,
+   "threshold": -40000
+  },
+  "IVTE": {
+   "file": "ivte.bin.gz",
+   "encoding": "u8-linear",
+   "vmax": 150.0,
+   "globalMean": 17.23,
+   "threshold": -2000
+  },
+  "IKEV": {
+   "file": "ikev.bin.gz",
+   "encoding": "u8-linear",
+   "vmax": 150.0,
+   "globalMean": 15.73,
+   "threshold": -460000
+  }
+ }
+}
