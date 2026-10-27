@@ -9,14 +9,15 @@ import Term from '../components/Term.astro';
 import TermPanels from '../components/TermPanels.astro';
 import LandfallFigure from '../components/LandfallFigure.astro';
 import FrequencyCompare from '../components/FrequencyCompare.astro';
+import MaskAnimation from '../components/MaskAnimation.astro';
 import DatasetRepr from '../components/DatasetRepr.astro';
 import kevBudgetRepr from '../data/kev_budget_repr.html?raw';
 
 <Base title={frontmatter.title}>
 
 <header class="hero">
-  <h1>Atmospheric rivers through the lens of the vapor kinetic energy</h1>
-  <p class="subtitle">A visual guide to a new framework for tracking and understanding atmospheric rivers</p>
+  <h1>Atmospheric rivers through the lens of vapor kinetic energy</h1>
+  {/* <p class="subtitle">A visual guide to a new framework for tracking and understanding atmospheric rivers</p> */}
   <div class="papers">
     <a href="https://doi.org/10.1038/s41467-024-53369-0">Ong &amp; Yang (2024), <em>Nat. Commun.</em></a>
     <a href="https://doi.org/10.1029/2025GL119841">Zhang, Yang, Ong &amp; Tan (2026), <em>GRL</em></a>
@@ -24,19 +25,19 @@ import kevBudgetRepr from '../data/kev_budget_repr.html?raw';
 </header>
 
 <LandfallFigure size={0.9}>
-  An atmospheric river making landfall on the US West Coast, 3–5 January 2023 (MERRA-2, 3-hourly means). **Left:** integrated vapor transport (IVT), with the AR detected from IVT outlined. **Right:** the same AR detected from vapor transport energy (IVTE) or the kinetic energy of vapor (IKEV); light contours show the metric itself. Shading shows either the metric ("Value") or the selected term of its budget, where red builds the AR up and blue erodes it. Budgets follow Zhang et al. (2026); vapor sources/sinks and turbulence come from MERRA-2's physics tendencies. "Turbulence" is shorthand for all subgrid momentum forcing, which in MERRA-2 comprises turbulence, gravity-wave drag and convection.
+  An atmospheric river making landfall on the US West Coast, 3–5 January 2023 (MERRA-2, 3-hourly means). **Left:** the AR detected from vapor transport energy (IVTE) or the kinetic energy of vapor (IKEV); light contours show the metric itself. Shading shows either the metric ("Value") or the selected term of its budget. **Right:** how much each budget term contributes to the AR's growth or decay (top) and to its movement (bottom), following Zhang et al. (2026) [[2]](#ref-2). Of the source terms, only condensation (net of re-evaporation) and turbulence are shown; smaller terms are omitted here. The residual is mainly due to the offline calculation of dynamics tendencies.
 </LandfallFigure>
 
 <div class="tldr">
-  <strong>TL;DR:</strong> Integrated vapor transport (IVT) is the standard tool for detecting atmospheric rivers, but it has no clean budget equation. <mark class="k-tend">**Vapor kinetic energy**</mark> detects the same atmospheric rivers and comes with a simple budget equation, allowing us to study their evolution. We show that atmospheric rivers <mark class="k-pe">grow by converting potential to kinetic energy</mark>, decay through <mark class="k-cond">condensation</mark> and <mark class="k-fric">turbulence</mark>, and <mark class="k-hflux">move by convergence of vapor kinetic energy flux</mark>.
+  <strong>TL;DR:</strong> Integrated vapor transport (IVT) is the standard tool for detecting atmospheric rivers, but it has no clean budget equation. The <mark class="k-tend">**vapor kinetic energy**</mark> (VKE) framework uses two related quantities that detect the same atmospheric rivers and come with simple budget equations, allowing us to study their evolution. We show that atmospheric rivers <mark class="k-pe">grow by converting potential to kinetic energy</mark>, decay through <mark class="k-cond">condensation</mark> and <mark class="k-fric">sub-grid momentum sinks</mark>, and <mark class="k-hflux">move by horizontal flux convergence</mark>.
 </div>
 
 <nav class="toc" aria-label="Contents">
   <strong>Contents</strong>
   <ol>
     <li><a href="#what-is-an-atmospheric-river">What is an atmospheric river?</a></li>
-    <li><a href="#limitations-of-ivt">Limitations of IVT</a></li>
     <li><a href="#from-momentum-to-energy">From momentum to energy</a></li>
+    <li><a href="#detected-ars-are-similar-to-those-from-ivt">Detected ARs are similar to those from IVT</a></li>
     <li><a href="#the-budget-equations">The budget equations</a></li>
     <li><a href="#code">Code</a></li>
     <li><a href="#references">References</a></li>
@@ -52,24 +53,16 @@ Atmospheric rivers (ARs) are long, narrow filaments of intense water vapor trans
 An AR needs two ingredients: **abundant water vapor** and **strong winds**. The standard AR diagnostic that captures both is the **integrated vapor transport** (IVT):
 
 $$
-\mathrm{IVT} \equiv \sqrt{\left(-\frac{1}{g}\int_{p_s}^{p_t} qu\,\mathrm{d}p\right)^{2} + \left(-\frac{1}{g}\int_{p_s}^{p_t} qv\,\mathrm{d}p\right)^{2}}
+\mathrm{IVT} \equiv \sqrt{\left(-\frac{1}{g}\int_{p_s}^{p_t} qu\,dp\right)^{2} + \left(-\frac{1}{g}\int_{p_s}^{p_t} qv\,dp\right)^{2}}
 $$
 
-where $q$ is specific humidity, $(u, v)$ is the horizontal wind, $p_s$ is surface pressure, and $p_t$ (usually 200 hPa) is a level above which vapor is negligible. IVT is the magnitude of the column-integrated vapor flux $q\mathbf{u}$. Its units are $\mathrm{kg\,m^{-1}\,s^{-1}}$ and represents the mass of water vapor crossing a 1 m line per second, summed over the column. ARs typically exceed about $250\ \mathrm{kg\,m^{-1}\,s^{-1}}$.
+where $q$ is specific humidity, $(u, v)$ is the horizontal wind, $p_s$ is surface pressure, and $p_t$ (usually 200 hPa) is a level above which vapor is negligible. IVT is the magnitude of the column-integrated vapor flux $q\mathbf{u}$ and has units $\mathrm{kg\,m^{-1}\,s^{-1}}$.
 
-Most AR detection algorithms rely on thresholds of IVT [[7]](#ref-7). They differ in detail but agree on five regions of frequent ARs: the North Pacific, southeast Pacific, North Atlantic, South Atlantic and southern Indian Ocean [[8]](#ref-8).
-
-## Limitations of IVT
-
-IVT is good at detecting ARs but poor at explaining them. Process studies have instead constructed budgets of column water vapor (AKA total precipitable water, up to a factor of density $\rho$). This can track where an AR's moisture comes from (mainly convergence) and where it goes (mainly precipitation), but it leaves out the wind entirely, implicitly treating wind evolution as secondary. Given how closely ARs are tied to extratropical cyclones and low-level jets, and how much of their damage comes from wind, we consider this limitation in developing a new metric for ARs.
-
-{/* <Callout title="What we want:">
-  A quantity that (1) combines moisture and wind, as IVT does; (2) detects the same ARs; and (3) has a simple budget equation derived directly from the equations of motion.
-</Callout> */}
+Most AR detection algorithms rely on thresholds of IVT [[7]](#ref-7)[[8]](#ref-8). However, IVT does not have a clean budget equation. Process studies have instead constructed budgets of column water vapor (also known as total precipitable water, up to a factor of the density of liquid water $\rho_w$). This can track where an AR's moisture comes from (mainly convergence) and where it goes (mainly precipitation), but it leaves out the wind entirely. We would like a quantity that combines moisture and wind as IVT does, so that it can detect the same ARs, but has a simple budget equation derived from the equations of motion.
 
 ## From momentum to energy
 
-One can think of the vapor flux $q\mathbf{u}$ as a moisture-weighted momentum. In classical mechanics, when momentum is unwieldy, we can turn to energy. Denoting the kinetic energy per unit mass $K \equiv (u^2+v^2)/2$, two "vapor-weighted kinetic energies" are natural:
+One can think of the vapor transport $q\mathbf{u}$ as a moisture-weighted momentum. In classical mechanics, when momentum is unwieldy, we can turn to energy. Denoting the kinetic energy per unit mass $K \equiv (u^2+v^2)/2$, two "moisture-weighted kinetic energies" are natural:
 
 $$
 \begin{aligned}
@@ -78,13 +71,11 @@ $$
 \end{aligned}
 $$
 
-KEV is the kinetic energy carried by the vapor. VTE is half the squared norm of the vapor flux $q\mathbf{u}$, playing a similar role as $K$ for $\mathbf{u}$. Both have units of $\mathrm{J\,kg^{-1}}$. Because $q$, $u$ and $v$ enter VTE with equal powers, as in IVT, VTE is weighted more toward moisture and KEV more toward wind.
+KEV is the kinetic energy carried by the water vapor. VTE is half the squared norm of the vapor transport $q\mathbf{u}$, playing a similar role to $K$ for $\mathbf{u}$. Both have units of $\mathrm{J\,kg^{-1}}$. Because $q$, $u$ and $v$ enter VTE with equal powers, as in IVT, VTE is weighted more toward moisture and KEV more toward wind.
 
 <div class="aside">
   A note on names: [[1]](#ref-1) introduced $q^2K$ as <em>vapor kinetic energy</em> (VKE). [[2]](#ref-2) renamed it vapor transport energy (VTE) to distinguish it from KEV, and "VKE" now refers to the framework.
 </div>
-
-{/* Why not use the budgets of $q$ and $K$ separately? $K$ peaks in the upper-tropospheric jet, far above most of the vapor. Weighting by $q$ focuses the budget on the lower troposphere, where the vapor and the low-level jet are. */}
 
 The column integrals, in $\mathrm{J\,m^{-2}}$, are
 
@@ -95,11 +86,44 @@ $$
 \end{aligned}
 $$
 
-Swap either one into an IVT-based detection algorithm, retune the threshold to match the global AR frequency, and the detected ARs are nearly identical. With IVTE, AR frequency changes by only 2–4 days per year, less than the ~10 days per year separating two standard IVT algorithms [[1]](#ref-1). IKEV detects slightly fewer ARs at low latitudes and more at high southern latitudes, where the jet is strong [[2]](#ref-2).
+Unlike IVT, IKEV and IVTE take the (squared) norm of the winds before taking the vertical integral. This allows us to derive a clean budget equation from the budget equations of momentum and water vapor. 
+
+## Detected ARs are similar to those from IVT
+
+Below, we show the similarities and differences between ARs detected from IKEV and IVTE and those detected from IVT, using a Laplacian thresholding algorithm. The Laplacian thresholds for IKEV and IVTE are chosen so that the global climatological frequency of ARs approximately matches the detection from IVT. With IVTE, global AR frequency changes by only 2–4 days per year, less than the ~10 days per year separating two standard IVT algorithms [[1]](#ref-1). IKEV detects slightly fewer ARs at low latitudes and more at high southern latitudes, where the jet is strong [[2]](#ref-2).
+
+<Derivation title="Details on the AR detection algorithm">
+
+We detect ARs with the Laplacian method of [TempestExtremes](https://github.com/ClimateGlobalChange/tempestextremes) `DetectBlobs`, following [[1]](#ref-1). For a column field $\phi$ (IVT, IKEV or IVTE), a grid point is an AR point if
+
+$$
+\nabla^2\phi < C_\phi
+\qquad\text{and}\qquad
+|\vartheta| \ge 20^\circ,
+$$
+
+where $\vartheta$ is latitude and $C_\phi$ is a threshold. An AR is a blob of at least 50 such grid points,
+connected through shared edges. The Laplacian thresholds are
+
+$$
+\begin{aligned}
+C_{\mathrm{IVT}} &= -4\times10^{4}\ \mathrm{kg\,m^{-1}\,s^{-1}\,rad^{-2}}, \\[4pt]
+C_{\mathrm{IKEV}} &= -4.6\times10^{5}\ \mathrm{J\,m^{-2}\,rad^{-2}}, \\[4pt]
+C_{\mathrm{IVTE}} &= -2\times10^{3}\ \mathrm{J\,m^{-2}\,rad^{-2}}.
+\end{aligned}
+$$
+
+The IVT threshold is the usual TempestExtremes value. The IKEV and IVTE thresholds are chosen to approximately match the global AR frequency of the IVT detection.
+
+</Derivation>
 
 <FrequencyCompare size={0.9}>
-  Mean AR frequency over 2010–2019 (MERRA-2), detected from IVT (left) and from IVTE or IKEV (right). Drag the divider, or focus it and use the arrow keys, to compare the two maps. **Difference** shows IVTE (or IKEV) minus IVT instead: red where the vapor kinetic energy metric detects more AR days, blue where it detects fewer. Each detection threshold is tuned so the global AR frequency is about the same. The tropics (within 20° of the equator) are excluded from detection. After Zhang et al. (2026), Fig. 1 [[2]](#ref-2).
+  Mean AR frequency over 2010–2019 (MERRA-2), detected from IVT (left) and from IVTE or IKEV (right). **Difference** shows IVTE (or IKEV) minus IVT. The tropics (within 20° of the equator) are excluded from detection. After Zhang et al. (2026), Fig. 1 [[2]](#ref-2).
 </FrequencyCompare>
+
+<MaskAnimation size={0.9}>
+  ARs detected every 3 hours through January 2010 (MERRA-2), outlined in black when detected from IVT, in blue from IVTE and in red from IKEV. Note that tropical cyclones are not filtered out here.
+</MaskAnimation>
 
 ## The budget equations
 
@@ -112,7 +136,7 @@ $$
 \;\term{vflux}{\underbrace{-\,\frac{\partial\left(\omega\,\mathrm{KEV}\right)}{\partial p}}_{\text{vertical flux}}}
 \;\term{pe}{\underbrace{-\,q\,\mathbf{u}\cdot\nabla_p\Phi}_{\text{PE}\,\to\,\text{KE}}}
 \;\term{cond}{\underbrace{+\;K\,S}_{\text{vapor sources/sinks}}}
-\;\term{fric}{\underbrace{+\;q\,\mathbf{u}\cdot\mathbf{F}}_{\text{turbulence}}}
+\;\term{fric}{\underbrace{+\;q\,\mathbf{u}\cdot\mathbf{F}}_{\substack{\text{sub-grid momentum}\\\text{sources/sinks}}}}
 $$
 
 $$
@@ -125,17 +149,17 @@ $$
 \;\term{fric}{+\;q^2\,\mathbf{u}\cdot\mathbf{F}}
 $$
 
-Here $\omega$ is pressure velocity, $\Phi$ is geopotential, $S$ is the net vapor source, and $\mathbf{F}$ is the parameterized subgrid momentum forcing. We call it "turbulence" for short because that is the dominant term, but it includes all subgrid momentum forcing; in MERRA-2, that is turbulence, gravity-wave drag and convection. The two equations differ only in their moisture weighting.
+Here $\omega$ is pressure velocity, $\Phi$ is geopotential, $S$ is the net vapor source, and $\mathbf{F}$ is the parameterized sub-grid momentum forcing, which in MERRA-2 comprises turbulence, gravity-wave drag and convection. The two equations differ only in their moisture weighting.
 
 <TermPanels>
   <Term kind="hflux" name="Horizontal flux convergence">
 
-  Horizontal winds carry VKE through the AR. Convergence downstream and divergence upstream move the AR. In some regions, net convergence also adds to its growth.
+  Horizontal winds carry KEV and VTE through the AR. Convergence downstream and divergence upstream move the AR. In some regions, net convergence also adds to its growth.
 
   </Term>
   <Term kind="vflux" name="Vertical flux convergence">
 
-  Redistributes VKE vertically, but nearly vanishes in the column integral, since $\omega \approx 0$ at the surface and $q \approx 0$ at $p_t$.
+  Redistributes KEV and VTE vertically, but nearly vanishes in the column integral, since $\omega \approx 0$ at the surface and $q \approx 0$ at $p_t$.
 
   </Term>
   <Term kind="pe" name="Conversion of potential to kinetic energy">
@@ -145,19 +169,19 @@ Here $\omega$ is pressure velocity, $\Phi$ is geopotential, $S$ is the net vapor
   </Term>
   <Term kind="cond" name="Vapor sources & sinks">
 
-  Condensation removes vapor, and with it the kinetic energy that vapor carried ($KS<0$). Surface evaporation adds vapor and acts as a source.
+  This term includes all sources and sinks of water vapor, including condensation, evaporation and chemistry. The main component is condensation, which acts as a sink of KEV and VTE.
 
   </Term>
-  <Term kind="fric" name="Turbulence">
+  <Term kind="fric" name="Sub-grid momentum sources & sinks">
 
-  The term includes all subgrid momentum forcing, which in MERRA-2 comprises turbulence, gravity-wave drag and convection. The main component is turbulent drag, concentrated in the boundary layer, which slows the wind and removes VKE.
+  The term includes all sub-grid momentum forcing, which in MERRA-2 comprises turbulence, gravity-wave drag and convection. The main component is turbulent drag, concentrated in the boundary layer, which slows the wind and removes KEV and VTE.
 
   </Term>
 </TermPanels>
 
 ### Integrating over the column
 
-With $\langle\,\cdot\,\rangle \equiv -\frac{1}{g}\int_{p_s}^{p_t}(\,\cdot\,)\,dp$, the column budget is, to a very good approximation,
+With $\langle\,\cdot\,\rangle \equiv -\frac{1}{g}\int_{p_s}^{p_t}(\,\cdot\,)\,dp$, the column budgets are, to leading order [[1]](#ref-1):
 
 $$
 \tc{tend}{\frac{\partial\,\mathrm{IKEV}}{\partial t}}
@@ -168,7 +192,15 @@ $$
 \;\tc{fric}{+\,\big\langle q\,\mathbf{u}\cdot\mathbf{F}\big\rangle}
 $$
 
-and likewise for IVTE.
+$$
+\tc{tend}{\frac{\partial\,\mathrm{IVTE}}{\partial t}}
+\approx
+\tc{hflux}{-\big\langle\nabla_p\!\cdot\!(\mathbf{u}\,\mathrm{VTE})\big\rangle}
+\;\tc{pe}{-\,\big\langle q^2\,\mathbf{u}\cdot\nabla_p\Phi\big\rangle}
+\;\tc{cond}{+\,\big\langle 2q K S\big\rangle}
+\;\tc{fric}{+\,\big\langle q^2 \,\mathbf{u}\cdot\mathbf{F}\big\rangle}
+$$
+
 
 <Derivation title="Derivation of the budget equations">
 
@@ -179,13 +211,12 @@ the moisture and horizontal momentum equations of the hydrostatic primitive equa
 
 $$
 \frac{Dq}{Dt} = S, \qquad
-\frac{D\mathbf{u}}{Dt} = -\left(f + \frac{u\tan\vartheta}{a}\right)\mathbf{k}\times\mathbf{u} - \nabla_p\Phi + \mathbf{F},
+\frac{D\mathbf{u}}{Dt} = -f \mathbf{k}\times\mathbf{u} - \nabla_p\Phi + \mathbf{F},
 $$
 
-where $f = 2\Omega\sin\vartheta$ is the Coriolis parameter, $\vartheta$ is latitude, and $a$ is Earth's radius.
+where $S$ denotes sources and sinks of water vapor, $f = 2\Omega\sin\vartheta$ is the Coriolis parameter ($\Omega$ is Earth\'s rotation rate and $\vartheta$ is latitude), $\Phi$ is the geopotential, and $\mathbf{F}$ is the sum of sub-grid momentum sources and sinks.
 
-**Kinetic energy.** Dotting the momentum equation with $\mathbf{u}$ removes the Coriolis and
-curvature terms, since $\mathbf{u}\cdot(\mathbf{k}\times\mathbf{u}) = 0$:
+**Kinetic energy.** Dotting the momentum equation with $\mathbf{u}$ removes the Coriolis term, since $\mathbf{u}\cdot(\mathbf{k}\times\mathbf{u}) = 0$:
 
 $$
 \frac{DK}{Dt} = -\,\mathbf{u}\cdot\nabla_p\Phi + \mathbf{u}\cdot\mathbf{F}.
@@ -195,13 +226,10 @@ $$
 
 $$
 \begin{aligned}
-\frac{D\,\mathrm{KEV}}{Dt} &= K\frac{Dq}{Dt} + q\frac{DK}{Dt} = K S - q\,\mathbf{u}\cdot\nabla_p\Phi + q\,\mathbf{u}\cdot\mathbf{F}, \\[4pt]
-\frac{D\,\mathrm{VTE}}{Dt} &= 2qK\frac{Dq}{Dt} + q^2\frac{DK}{Dt} = 2qK S - q^2\,\mathbf{u}\cdot\nabla_p\Phi + q^2\,\mathbf{u}\cdot\mathbf{F}.
+\frac{D}{Dt} \mathrm{KEV} &= K\frac{Dq}{Dt} + q\frac{DK}{Dt} = K S - q\,\mathbf{u}\cdot\nabla_p\Phi + q\,\mathbf{u}\cdot\mathbf{F}, \\[4pt]
+\frac{D}{Dt} \mathrm{VTE} &= 2qK\frac{Dq}{Dt} + q^2\frac{DK}{Dt} = 2qK S - q^2\,\mathbf{u}\cdot\nabla_p\Phi + q^2\,\mathbf{u}\cdot\mathbf{F}.
 \end{aligned}
 $$
-
-Equivalently, the VTE budget follows from dotting the vapor-transport equation
-$D(q\mathbf{u})/Dt = q\,D\mathbf{u}/Dt + \mathbf{u}S$ with $q\mathbf{u}$.
 
 **Flux form.** By continuity, $\nabla_p\cdot\mathbf{u} + \partial\omega/\partial p = 0$, so for any $X$,
 
@@ -209,40 +237,46 @@ $$
 \frac{\partial X}{\partial t} = -\nabla_p\cdot(\mathbf{u}X) - \frac{\partial(\omega X)}{\partial p} + \frac{DX}{Dt}.
 $$
 
-**Column integral.** Define $\langle X\rangle \equiv \frac{1}{g}\int_{p_t}^{p_s} X\,dp$. Because the surface
-pressure $p_s$ varies in space and time, integrating each flux-form term gives
+This gives
 
 $$
 \begin{aligned}
-\left\langle\frac{\partial X}{\partial t}\right\rangle &= \frac{\partial\langle X\rangle}{\partial t} - \frac{X_s}{g}\frac{\partial p_s}{\partial t}, \\[4pt]
-\big\langle\nabla_p\cdot(\mathbf{u}X)\big\rangle &= \nabla\cdot\langle\mathbf{u}X\rangle - \frac{X_s}{g}\,\mathbf{u}_s\cdot\nabla p_s, \\[4pt]
-\left\langle\frac{\partial(\omega X)}{\partial p}\right\rangle &= \frac{1}{g}\Big[(\omega X)_s - (\omega X)_t\Big].
+\frac{\partial\,\mathrm{KEV}}{\partial t} &= -\nabla_p\cdot\left(\mathbf{u}\,\mathrm{KEV}\right) - \frac{\partial\left(\omega\,\mathrm{KEV}\right)}{\partial p} - q\,\mathbf{u}\cdot\nabla_p\Phi + K S + q\,\mathbf{u}\cdot\mathbf{F}, \\[4pt]
+\frac{\partial\,\mathrm{VTE}}{\partial t} &= -\nabla_p\cdot\left(\mathbf{u}\,\mathrm{VTE}\right) - \frac{\partial\left(\omega\,\mathrm{VTE}\right)}{\partial p} - q^2\,\mathbf{u}\cdot\nabla_p\Phi + 2qK S + q^2\,\mathbf{u}\cdot\mathbf{F}.
 \end{aligned}
 $$
 
-The surface terms combine to $\frac{X_s}{g}\left(\frac{\partial p_s}{\partial t} + \mathbf{u}_s\cdot\nabla p_s - \omega_s\right)$,
-which vanishes by the kinematic boundary condition $\omega_s = Dp_s/Dt$. The top term is negligible
-because $q(p_t) \approx 0$. The column budgets are therefore
+
+**Column integral.** Apply $\langle\,\cdot\,\rangle \equiv -\frac{1}{g}\int_{p_s}^{p_t}(\,\cdot\,)\,dp$ to each term of the flux-form budgets,
+so that $\mathrm{IKEV} = \langle\mathrm{KEV}\rangle$ and $\mathrm{IVTE} = \langle\mathrm{VTE}\rangle$. Because the surface
+pressure $p_s$ varies in time, the tendency term picks up a surface contribution,
+
+$$
+\left\langle\frac{\partial X}{\partial t}\right\rangle = \frac{\partial\langle X\rangle}{\partial t} - \frac{X_s}{g}\frac{\partial p_s}{\partial t},
+$$
+
+which is small because surface pressure tendencies are small. The vertical flux term integrates to its values at
+the column boundaries, which nearly vanish because $\omega \approx 0$ at the surface and $q \approx 0$ at $p_t$.
+Dropping both, the column budgets are, to leading order,
 
 $$
 \begin{aligned}
-\frac{\partial\,\mathrm{IKEV}}{\partial t} &= -\nabla\cdot\langle\mathbf{u}\,\mathrm{KEV}\rangle + \langle K S\rangle - \langle q\,\mathbf{u}\cdot\nabla_p\Phi\rangle + \langle q\,\mathbf{u}\cdot\mathbf{F}\rangle, \\[4pt]
-\frac{\partial\,\mathrm{IVTE}}{\partial t} &= -\nabla\cdot\langle\mathbf{u}\,\mathrm{VTE}\rangle + \langle 2qK S\rangle - \langle q^2\,\mathbf{u}\cdot\nabla_p\Phi\rangle + \langle q^2\,\mathbf{u}\cdot\mathbf{F}\rangle.
+\frac{\partial\,\mathrm{IKEV}}{\partial t} &\approx -\big\langle\nabla_p\cdot(\mathbf{u}\,\mathrm{KEV})\big\rangle - \big\langle q\,\mathbf{u}\cdot\nabla_p\Phi\big\rangle + \big\langle K S\big\rangle + \big\langle q\,\mathbf{u}\cdot\mathbf{F}\big\rangle, \\[4pt]
+\frac{\partial\,\mathrm{IVTE}}{\partial t} &\approx -\big\langle\nabla_p\cdot(\mathbf{u}\,\mathrm{VTE})\big\rangle - \big\langle q^2\,\mathbf{u}\cdot\nabla_p\Phi\big\rangle + \big\langle 2qK S\big\rangle + \big\langle q^2\,\mathbf{u}\cdot\mathbf{F}\big\rangle.
 \end{aligned}
 $$
 
 <div className="aside">
 
 In MERRA-2, $S$ combines moist physics, turbulence (including surface evaporation) and chemistry,
-and $\mathbf{F}$ combines turbulence, gravity-wave drag and convection. Ong &amp; Yang (2024) also
-track a small contribution from data-assimilation increments.
+and $\mathbf{F}$ combines turbulence, gravity-wave drag and convection. There is also a small contribution from data-assimilation increments.
 </div>
 
 </Derivation>
 
 ## Code
 
-We are developing an open-source Python package for these diagnostics, [vke-budgets](https://github.com/ychnli/vke-budgets). It takes the winds, humidity, geopotential and surface pressure from a reanalysis and computes every term of the column-integrated KEV and VTE budgets on its grid. It currently reads MERRA-2, whose physics tendencies give the vapor sources/sinks and turbulence terms directly. Support for ERA5 is forthcoming.
+We are developing an open-source Python package for these diagnostics, [vke-budgets](https://github.com/ychnli/vke-budgets). It takes the winds, humidity, geopotential and surface pressure from a reanalysis product or model output and computes every term of the column-integrated KEV and VTE budgets on its grid. It currently reads MERRA-2, whose physics tendencies give the vapor and sub-grid momentum sources/sinks directly. Support for ERA5 is forthcoming.
 
 For example, the KEV budget of one day of MERRA-2 over the northeast Pacific:
 

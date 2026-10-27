@@ -70,13 +70,13 @@
    "file": "ivte.bin.gz",
    "encoding": "u8-sqrt",
    "vmax": 200.0,
-   "units": "kg s⁻²"
+   "units": "J m⁻²"
   },
   "IKEV": {
    "file": "ikev.bin.gz",
    "encoding": "u8-sqrt",
    "vmax": 20000.0,
-   "units": "kg s⁻²"
+   "units": "J m⁻²"
   }
  },
  "masks": {
@@ -142,6 +142,6 @@
    17500.0
   ]
  },
- "termUnits": "kg s⁻² h⁻¹",
+ "termUnits": "J m⁻² h⁻¹",
  "notes": "cond and fric are residuals of the vapor and kinetic-energy equations (ERA5 has no physics tendencies); terms are 3-hour running means; 0.5 deg display grid."
 }

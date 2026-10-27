@@ -1,9 +1,11 @@
 ---
-// Hero figure: the January 2023 landfalling AR seen through IVT (left) and the VKE budget
-// (right). Data come from analysis/ (ERA5) via public/data/landfall-2023/manifest.json.
+// Hero figure: the January 2023 landfalling AR seen through its VKE budget. Left: maps of the
+// metric or one budget term. Right: each term's contribution to the AR's growth/decay and
+// movement, as bar charts. Maps come from public/data/<case>/manifest.json, bars from
+// public/data/<case>/budget_bars.json (format: analysis/BUDGET_BARS.md).
 //   <LandfallFigure size={0.9}>Caption…</LandfallFigure>
 // `size` scales the figure's full width (1 = 62rem); it never exceeds the screen.
-// Term buttons reuse the .k-<kind> colors defined once in global.css.
+// Term buttons and bars reuse the .k-<kind> colors defined once in global.css.
 import { asset } from '../lib/asset';
 
 interface Props {
@@ -21,29 +23,18 @@ const terms = [
   ['hflux', 'Horizontal flux'],
   ['vflux', 'Vertical flux'],
   ['pe', 'PE → KE'],
-  ['cond', 'Vapor sources & sinks'],
+  ['cond', 'Condensation'],
   ['fric', 'Turbulence'],
+];
+const charts = [
+  ['growth', 'Contribution to growth / decay'],
+  ['movement', 'Contribution to movement'],
 ];
 ---
 
 <figure class="figure wide landfall" style={`--fig-scale: ${size}`}>
-  <landfall-figure data-base={base} tabindex="0" role="group" aria-label="Animated maps of an atmospheric river making landfall, 3–5 January 2023">
+  <landfall-figure data-base={base} tabindex="0" role="group" aria-label="Animated maps and budget bar charts of an atmospheric river making landfall, 3–5 January 2023">
     <div class="lf-panels">
-      <section class="lf-panel" data-panel="ivt">
-        <header class="lf-head">
-          <div>
-            <h3>Integrated vapor transport</h3>
-          </div>
-        </header>
-        <div class="lf-map">
-          <canvas></canvas><svg aria-hidden="true"></svg><div class="lf-readout" aria-hidden="true"></div>
-          <ul class="lf-key">
-            <li><span class="lf-swatch bold"></span>Bold contour: AR detected from IVT</li>
-          </ul>
-        </div>
-        <div class="lf-legend" data-legend></div>
-      </section>
-
       <section class="lf-panel" data-panel="vke">
         <header class="lf-head">
           <div>
@@ -55,7 +46,7 @@ const terms = [
           </div>
         </header>
         <div class="lf-map">
-          <canvas></canvas><svg aria-hidden="true"></svg><div class="lf-readout" aria-hidden="true"></div>
+          <canvas></canvas><svg aria-hidden="true"></svg>
           <ul class="lf-key">
             <li><span class="lf-swatch bold"></span>Bold contour: AR detected from <span data-metric-name>IVTE</span></li>
             <li><span class="lf-swatch light"></span>Light contours: <span data-metric-name>IVTE</span></li>
@@ -64,10 +55,25 @@ const terms = [
         <div class="lf-legend" data-legend></div>
         <div class="lf-terms" role="group" aria-label="Shading">
           {terms.map(([k, label]) => (
-            <button type="button" class={`term-chip k-${k}`} data-term={k} aria-pressed={k === 'pe' ? 'true' : 'false'}
-              title={k === 'fric' ? 'All subgrid momentum forcing; in MERRA-2: turbulence, gravity-wave drag and convection' : undefined}>{label}</button>
+            <button type="button" class={`term-chip k-${k}`} data-term={k} aria-pressed={k === 'pe' ? 'true' : 'false'}>{label}</button>
           ))}
         </div>
+      </section>
+
+      <section class="lf-panel" data-panel="budget">
+        <header class="lf-head">
+          <div>
+            <h3><span data-metric-name>IVTE</span> budget of the AR</h3>
+          </div>
+          <span class="lf-filler" hidden>Placeholder numbers</span>
+        </header>
+        {charts.map(([k, label]) => (
+          <div class="lf-chart" data-chart={k}>
+            <h4>{label} <span class="lf-units"></span></h4>
+            <svg role="img" aria-label={label}></svg>
+          </div>
+        ))}
+        <p class="lf-bars-status"></p>
       </section>
     </div>
 
@@ -94,10 +100,6 @@ const terms = [
   .lf-map { position: relative; width: 100%; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; background: #f3f4f6; }
   .lf-map canvas, .lf-map svg { position: absolute; inset: 0; width: 100%; height: 100%; }
   .lf-map svg { pointer-events: none; }
-  .lf-readout {
-    position: absolute; left: 0.4rem; bottom: 0.35rem; padding: 0.1rem 0.4rem; border-radius: 3px;
-    background: rgba(255, 255, 255, 0.85); font-size: 0.75rem; font-variant-numeric: tabular-nums; display: none;
-  }
   /* contour key, upper left of each map */
   .lf-key {
     position: absolute; top: 0.4rem; left: 0.4rem; margin: 0; padding: 0.2rem 0.45rem; list-style: none;
@@ -128,6 +130,27 @@ const terms = [
   .lf-slider { flex: 1; min-width: 4rem; accent-color: var(--accent); }
   .lf-time { min-width: 8.5rem; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
   .lf-status { margin: 0.4rem 0 0; font-size: 0.8rem; color: var(--muted); min-height: 1.2em; }
+  /* budget bar charts (right panel). Bars are drawn by the script, so their parts need :global(). */
+  .lf-panel[data-panel='budget'] { position: relative; gap: 0.75rem; }
+  .lf-filler {
+    flex: none; font-family: var(--sans); font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--muted); border: 1px dashed var(--border); border-radius: 3px; padding: 0.05rem 0.4rem;
+  }
+  .lf-chart h4 { margin: 0 0 0.2rem; font-family: var(--sans); font-size: 0.82rem; font-weight: 600; }
+  .lf-units { font-weight: 400; color: var(--muted); }
+  .lf-chart svg { display: block; width: 100%; overflow: visible; font-family: var(--sans); }
+  .lf-chart :global(text) { font-size: 11px; fill: var(--text); }
+  .lf-chart :global(.muted) { fill: var(--muted); }
+  .lf-chart :global(.row) { cursor: pointer; }
+  .lf-chart :global(.row .hit) { fill: transparent; }
+  .lf-chart :global(.row:hover .hit) { fill: color-mix(in srgb, var(--c) 6%, transparent); }
+  .lf-chart :global(.row.is-active .hit) { fill: color-mix(in srgb, var(--c) 12%, transparent); }
+  .lf-chart :global(.row.is-active text) { font-weight: 600; }
+  .lf-chart :global(.bar) { fill: var(--c); }
+  .lf-chart :global(.grid) { stroke: var(--border); stroke-width: 1; }
+  .lf-chart :global(.zero) { stroke: var(--muted); stroke-width: 1; }
+  .lf-bars-status { margin: 0; font-size: 0.8rem; color: var(--muted); }
+  .lf-bars-status:empty { display: none; }
 </style>
 
 <script>
@@ -146,10 +169,31 @@ const terms = [
     termUnits: string;
   };
   type Lines = Record<string, number[][][]>;
+  // budget_bars.json, described in analysis/BUDGET_BARS.md
+  type Chart = { units: string; terms: Record<string, (number | null)[]> }; // one value per frame
+  type Bars = {
+    filler?: boolean;
+    times: string[];
+    metrics: Record<string, Record<string, Chart>>; // metric → chart (growth | movement)
+  };
 
   const TERM_LABEL: Record<string, string> = {
     tend: 'total tendency', hflux: 'horizontal flux convergence', vflux: 'vertical flux convergence',
-    pe: 'PE → KE conversion', cond: 'vapor sources & sinks', fric: 'turbulence',
+    pe: 'PE → KE conversion', cond: 'condensation', fric: 'turbulence',
+  };
+  // Bar rows, top to bottom; the total sits above a divider.
+  const BAR_ROWS: [kind: string, label: string][] = [
+    ['tend', 'Total tendency'],
+    ['hflux', 'Horizontal flux'],
+    ['vflux', 'Vertical flux'],
+    ['pe', 'PE → KE conversion'],
+    ['cond', 'Condensation'],
+    ['fric', 'Turbulence'],
+  ];
+  // What the negative and positive ends of each chart's axis mean.
+  const AXIS_ENDS: Record<string, [string, string]> = {
+    growth: ['← decay', 'growth →'],
+    movement: ['← opposes motion', 'drives motion →'],
   };
   const FULL_NAME: Record<string, string> = {
     IVTE: 'Integrated vapor transport energy', IKEV: 'Integrated kinetic energy of vapor',
@@ -188,6 +232,16 @@ const terms = [
     return new Response(stream).arrayBuffer();
   }
 
+  /** About five round tick values covering [lo, hi]. */
+  function niceTicks(lo: number, hi: number): number[] {
+    const raw = (hi - lo) / 5;
+    const mag = 10 ** Math.floor(Math.log10(raw));
+    const step = [1, 2, 2.5, 5, 10].map((f) => f * mag).find((s) => s >= raw)!;
+    const out: number[] = [];
+    for (let v = Math.ceil(lo / step) * step; v <= hi + step * 1e-9; v += step) out.push(+v.toFixed(10));
+    return out;
+  }
+
   class LandfallFigure extends HTMLElement {
     private m!: Manifest;
     private lines!: Lines;
@@ -204,6 +258,8 @@ const terms = [
     private playBtn!: HTMLButtonElement;
     private status!: HTMLElement;
     private ready = false;
+    private bars: Bars | null = null;
+    private barDomain = new Map<string, [number, number]>(); // `${metric}:${chart}` → fixed axis range
 
     async connectedCallback() {
       this.base = this.dataset.base!;
@@ -220,7 +276,7 @@ const terms = [
         this.slider.max = String(m.times.length - 1);
         const ar = (m.grid.nx * m.grid.dlon * Math.cos(this.midLat() * Math.PI / 180)) / (m.grid.ny * Math.abs(m.grid.dlat));
         this.querySelectorAll<HTMLElement>('.lf-map').forEach((el) => (el.style.aspectRatio = String(ar)));
-        await Promise.all([this.field('IVT'), this.mask('IVT'), this.field('IVTE'), this.mask('IVTE'), this.termData('IVTE', 'pe')]);
+        await Promise.all([this.field('IVTE'), this.mask('IVTE'), this.termData('IVTE', 'pe'), this.loadBars()]);
         this.ready = true;
         this.status.textContent = '';
         this.bind();
@@ -269,6 +325,33 @@ const terms = [
       });
     }
 
+    /** Bar data are optional: without them the maps still work and the chart panel says why. */
+    private async loadBars() {
+      const note = this.querySelector('.lf-bars-status')!;
+      try {
+        const res = await fetch(this.base + 'budget_bars.json');
+        if (!res.ok) throw new Error(`${res.status} budget_bars.json`);
+        const b: Bars = await res.json();
+        if (b.times.join() !== this.m.times.join()) throw new Error('budget_bars.json times differ from manifest.json');
+        this.bars = b;
+        this.querySelector<HTMLElement>('.lf-filler')!.hidden = !b.filler;
+        // One axis range per metric and chart for all frames, so bar lengths compare across time.
+        for (const [metric, charts] of Object.entries(b.metrics)) {
+          for (const [chart, c] of Object.entries(charts)) {
+            let lo = 0, hi = 0;
+            for (const s of Object.values(c.terms)) {
+              for (const v of s) if (v != null) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+            }
+            const pad = (hi - lo || 1) * 0.04;
+            this.barDomain.set(`${metric}:${chart}`, [lo < 0 ? lo - pad : 0, hi > 0 ? hi + pad : 0]);
+          }
+        }
+      } catch (e) {
+        note.textContent = 'Bar chart data not available.';
+        console.warn(e);
+      }
+    }
+
     private termData(metric: string, term: string) {
       const t = this.m.terms[metric];
       return this.load(`t:${metric}:${term}`, t.files[term], (b) => {
@@ -295,15 +378,13 @@ const terms = [
         else if (e.key === 'ArrowRight') { e.preventDefault(); this.step(1); }
         else if (e.key === 'ArrowLeft') { e.preventDefault(); this.step(-1); }
       });
-      this.querySelectorAll<HTMLElement>('.lf-map').forEach((map) => {
-        const panel = map.closest<HTMLElement>('[data-panel]')!.dataset.panel!;
-        const out = map.querySelector<HTMLElement>('.lf-readout')!;
-        map.addEventListener('pointermove', (e) => {
-          const r = map.getBoundingClientRect();
-          out.style.display = 'block';
-          out.textContent = this.readout(panel, (e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+      // Clicking a bar shades the map with that term.
+      this.querySelectorAll<HTMLElement>('[data-chart]').forEach((el) => {
+        const svg = el.querySelector('svg')!;
+        svg.addEventListener('click', (e) => {
+          const row = (e.target as Element).closest<SVGGElement>('.row');
+          if (row) this.select(this.metric, row.dataset.kind!);
         });
-        map.addEventListener('pointerleave', () => (out.style.display = 'none'));
       });
       let resizeTimer: number | undefined;
       new ResizeObserver(() => { clearTimeout(resizeTimer); resizeTimer = window.setTimeout(() => this.render(), 50); }).observe(this);
@@ -370,13 +451,10 @@ const terms = [
       this.slider.value = String(this.t);
       const stamp = times[this.t].replace('T', ' ').replace(/Z$/, ' UTC');
       this.querySelector('.lf-time')!.textContent = this.m.frameLabel ? `${stamp} · 3-h mean` : stamp;
-      // left: IVT + IVT outline
-      const ivt = this.frameSlice(this.cache.get('f:IVT')!);
-      const vmaxIVT = this.m.fields.IVT.vmax;
-      this.drawPanel('ivt', ivt, this.seqLut, (v) => lutIndex(this.seqLut, v / vmaxIVT),
-        this.frameSlice(this.cache.get('m:IVT')!), null);
-      this.legend('ivt', this.seqLut, [[0, '0'], [0.5, String(vmaxIVT / 2)], [1, String(vmaxIVT)]], this.m.fields.IVT.units);
-      // right: the metric itself or a budget term, + metric outline + metric contours
+      this.querySelectorAll('[data-metric-name]').forEach((el) => (el.textContent = this.metric));
+      // right: each term's contribution to growth/decay and movement at this frame
+      this.querySelectorAll<HTMLElement>('[data-chart]').forEach((el) => this.drawBars(el));
+      // left: the metric itself or a budget term, + metric outline + metric contours
       const m = this.metric;
       const isValue = this.term === 'value';
       const tk = isValue ? `f:${m}` : `t:${m}:${this.term}`;
@@ -397,7 +475,50 @@ const terms = [
         this.legend('vke', this.divLut, [[0, `−${scale}`], [0.5, '0'], [1, `+${scale}`]], this.m.termUnits);
         title.textContent = `${m} tendency: ${TERM_LABEL[this.term]}`;
       }
-      this.querySelectorAll('[data-metric-name]').forEach((el) => (el.textContent = this.metric));
+    }
+
+    private drawBars(el: HTMLElement) {
+      const chart = el.dataset.chart!;
+      const svg = el.querySelector('svg')!;
+      const c = this.bars?.metrics[this.metric]?.[chart];
+      el.querySelector('.lf-units')!.textContent = c ? `(${c.units})` : '';
+      if (!c) { svg.innerHTML = ''; svg.removeAttribute('height'); return; }
+      const W = svg.clientWidth;
+      if (!W) return;
+      const labelW = 128, rowH = 22, barH = 12, divider = 8, axisH = 34;
+      const [lo, hi] = this.barDomain.get(`${this.metric}:${chart}`)!;
+      const x0 = labelW + 6, x1 = W - 6;
+      const x = (v: number) => x0 + ((v - lo) / (hi - lo)) * (x1 - x0);
+      const rowY = (i: number) => i * rowH + (i > 0 ? divider : 0);
+      const plotH = rowY(BAR_ROWS.length);
+      const ticks = niceTicks(lo, hi);
+      let s = ticks.map((t) => `<line class="${t === 0 ? 'zero' : 'grid'}" x1="${x(t)}" x2="${x(t)}" y1="0" y2="${plotH}"/>`).join('');
+      // divider between the total and the process terms
+      s += `<line class="grid" x1="0" x2="${x1}" y1="${rowH + divider / 2}" y2="${rowH + divider / 2}"/>`;
+      BAR_ROWS.forEach(([kind, label], i) => {
+        const y = rowY(i), mid = y + rowH / 2;
+        const v = c.terms[kind]?.[this.t];
+        let mark = '';
+        if (v == null) {
+          mark = `<text class="muted" x="${x(0) + 4}" y="${mid}" dy="0.35em">n/a</text>`;
+        } else {
+          const a = x(0), b = x(v);
+          mark = `<rect class="bar" x="${Math.min(a, b)}" y="${mid - barH / 2}" width="${Math.abs(b - a)}" height="${barH}"/>`;
+        }
+        const active = kind === this.term ? ' is-active' : '';
+        s += `<g class="row k-${kind}${active}" data-kind="${kind}">` +
+          `<rect class="hit" x="0" y="${y}" width="${x1}" height="${rowH}" rx="3"/>` +
+          `<text x="${labelW}" y="${mid}" dy="0.35em" text-anchor="end">${label}</text>${mark}</g>`;
+      });
+      // value axis: tick labels, then what each end means (units are in the heading)
+      const ay = plotH + 13;
+      s += ticks.map((t) => `<text class="muted" x="${x(t)}" y="${ay}" text-anchor="middle">${String(t).replace('-', '−')}</text>`).join('');
+      const [neg, pos] = AXIS_ENDS[chart];
+      s += `<text class="muted" x="${x0}" y="${ay + 16}">${lo < 0 ? neg : ''}</text>` +
+        `<text class="muted" x="${x1}" y="${ay + 16}" text-anchor="end">${hi > 0 ? pos : ''}</text>`;
+      svg.setAttribute('height', String(plotH + axisH));
+      svg.setAttribute('viewBox', `0 0 ${W} ${plotH + axisH}`);
+      svg.innerHTML = s;
     }
 
     private drawPanel(panel: string, data: Float32Array, L: Uint8ClampedArray,
@@ -469,26 +590,6 @@ const terms = [
         return `<i style="left:${p * 100}%"></i><span style="left:${p * 100}%;transform:translateX(${shift}%)">${label}</span>`;
       }).join('');
       el.querySelector('.units')!.textContent = units;
-    }
-
-    private readout(panel: string, fx: number, fy: number) {
-      const { nx, ny, lon0, dlon, lat0, dlat } = this.m.grid;
-      const i = Math.min(nx - 1, Math.max(0, Math.floor(fx * nx)));
-      const j = Math.min(ny - 1, Math.max(0, Math.floor(fy * ny)));
-      const k = j * nx + i;
-      const lon = lon0 + i * dlon, lat = lat0 + j * dlat;
-      const where = `${Math.abs(lat).toFixed(1)}°N ${Math.abs(lon).toFixed(1)}°W`;
-      if (panel === 'ivt') {
-        const v = this.frameSlice(this.cache.get('f:IVT')!)[k];
-        return `${where}  IVT ${v.toFixed(0)} ${this.m.fields.IVT.units}`;
-      }
-      if (this.term === 'value') {
-        const v = this.frameSlice(this.cache.get(`f:${this.metric}`)!)[k];
-        return `${where}  ${this.metric} ${v.toFixed(v >= 1000 ? 0 : 1)} ${this.m.fields[this.metric].units}`;
-      }
-      const a = this.cache.get(`t:${this.metric}:${this.term}`);
-      if (!a) return where;
-      return `${where}  ${this.frameSlice(a)[k].toFixed(2)} ${this.m.termUnits}`;
     }
   }
 

@@ -7,7 +7,8 @@ Each source dataset has a profile (PROFILES) describing how to display it:
          windows at 09/10Z and 21/22Z). cond and fric are residuals.
   merra2 MERRA-2 budget produced on Sherlock with Zhang et al.'s pipeline (see
          VERIFICATION_MERRA2.md): native 0.5 x 0.625 deg grid, 3-hourly tavg windows, terms
-         already 3-hour means; cond and fric from MERRA-2 physics tendencies. Lightly
+         already 3-hour means; cond (condensation net of re-evaporation) and fric (turbulence
+         only) from MERRA-2 physics tendencies. Lightly
          smoothed (sigma 0.3 deg); ana and spte are kept in the data file but not displayed.
 AR masks are mask fractions, drawn as the 0.5 contour in the browser.
 Encoding: terms Int8 with signed-sqrt companding up to E = 3 x the display scale;
@@ -27,7 +28,7 @@ from scipy.ndimage import gaussian_filter
 from . import budget, config as C, geo
 
 PUBLIC = C.ROOT.parent / "public" / "data"
-TERM_UNITS = "kg s⁻² h⁻¹"  # displayed: SI kg s-3 x 3600
+TERM_UNITS = "J m⁻² h⁻¹"  # displayed: SI W m-2 x 3600
 
 PROFILES = {
     "era5": {
@@ -52,7 +53,8 @@ PROFILES = {
         "fps": 2.5,
         "frame_label": "3-h mean centred on",
         "notes": "MERRA-2 3-hourly time-averaged budgets (Zhang et al. 2026 framework, computed on Sherlock); "
-                 "cond and fric from MERRA-2 physics tendencies; analysis increments and the surface-pressure "
+                 "cond is condensation net of re-evaporation and fric is turbulence only, both from MERRA-2 "
+                 "physics tendencies; analysis increments and the surface-pressure "
                  "term are not displayed; native 0.5 x 0.625 deg grid.",
     },
 }
@@ -163,7 +165,7 @@ def export(profile: str = "era5"):
         f = prep(ds[k])
         vmax = _nice(float(np.percentile(f, 99.9)))
         man["fields"][k] = {"file": _write(out, k.lower(), _enc_sqrt_u8(f, vmax), np.uint8),
-                            "encoding": "u8-sqrt", "vmax": vmax, "units": "kg s⁻²"}
+                            "encoding": "u8-sqrt", "vmax": vmax, "units": "J m⁻²"}
         p99 = float(np.percentile(f[masks[k]], 90)) if masks[k].any() else vmax / 2
         step = _nice(p99 / 4)
         man["contours"][k] = [round(step * (i + 0.5), 6) for i in range(12) if step * (i + 0.5) < vmax]

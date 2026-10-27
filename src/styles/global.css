@@ -19,7 +19,7 @@
   --c-vflux: #2e8b57;  /* vertical flux convergence   (green)  */
   --c-pe: #c0392b;     /* PE → KE conversion          (red)    */
   --c-cond: #7b4fa0;   /* vapor sources & sinks       (purple) */
-  --c-fric: #56677a;   /* turbulence (all subgrid momentum forcing) (slate) */
+  --c-fric: #56677a;   /* sub-grid momentum sources & sinks (slate) */
 
   color-scheme: light;
 }

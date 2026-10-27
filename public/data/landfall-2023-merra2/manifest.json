@@ -39,13 +39,13 @@
    "file": "ivte.bin.gz",
    "encoding": "u8-sqrt",
    "vmax": 200.0,
-   "units": "kg s⁻²"
+   "units": "J m⁻²"
   },
   "IKEV": {
    "file": "ikev.bin.gz",
    "encoding": "u8-sqrt",
    "vmax": 20000.0,
-   "units": "kg s⁻²"
+   "units": "J m⁻²"
   }
  },
  "masks": {
@@ -95,14 +95,16 @@
  },
  "contours": {
   "IVTE": [
-   12.5,
-   37.5,
-   62.5,
-   87.5,
-   112.5,
-   137.5,
-   162.5,
-   187.5
+   10.0,
+   30.0,
+   50.0,
+   70.0,
+   90.0,
+   110.0,
+   130.0,
+   150.0,
+   170.0,
+   190.0
   ],
   "IKEV": [
    2500.0,
@@ -111,6 +113,6 @@
    17500.0
   ]
  },
- "termUnits": "kg s⁻² h⁻¹",
- "notes": "MERRA-2 3-hourly time-averaged budgets (Zhang et al. 2026 framework, computed on Sherlock); cond and fric from MERRA-2 physics tendencies; analysis increments and the surface-pressure term are not displayed; native 0.5 x 0.625 deg grid."
+ "termUnits": "J m⁻² h⁻¹",
+ "notes": "MERRA-2 3-hourly time-averaged budgets (Zhang et al. 2026 framework, computed on Sherlock); cond is condensation net of re-evaporation and fric is turbulence only, both from MERRA-2 physics tendencies; analysis increments and the surface-pressure term are not displayed; native 0.5 x 0.625 deg grid."
 }
