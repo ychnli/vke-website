@@ -38,7 +38,7 @@ const charts = [
       <section class="lf-panel" data-panel="vke">
         <header class="lf-head">
           <div>
-            <h3 class="lf-vke-title">IVTE tendency</h3>
+            <h3 class="lf-vke-title">Integrated vapor transport energy</h3>
           </div>
           <div class="lf-metric" role="group" aria-label="Metric">
             <button type="button" data-metric="IVTE" aria-pressed="true">IVTE</button>
@@ -55,7 +55,7 @@ const charts = [
         <div class="lf-legend" data-legend></div>
         <div class="lf-terms" role="group" aria-label="Shading">
           {terms.map(([k, label]) => (
-            <button type="button" class={`term-chip k-${k}`} data-term={k} aria-pressed={k === 'pe' ? 'true' : 'false'}>{label}</button>
+            <button type="button" class={`term-chip k-${k}`} data-term={k} aria-pressed={k === 'value' ? 'true' : 'false'}>{label}</button>
           ))}
         </div>
       </section>
@@ -250,7 +250,7 @@ const charts = [
     private pending = new Map<string, Promise<Float32Array>>();
     private t = 0;
     private metric = 'IVTE';
-    private term = 'pe';
+    private term = 'value';
     private timer: number | undefined;
     private seqLut = lut(interpolateBlues);
     private divLut = lut((t) => interpolateRdBu(1 - t));
@@ -276,7 +276,7 @@ const charts = [
         this.slider.max = String(m.times.length - 1);
         const ar = (m.grid.nx * m.grid.dlon * Math.cos(this.midLat() * Math.PI / 180)) / (m.grid.ny * Math.abs(m.grid.dlat));
         this.querySelectorAll<HTMLElement>('.lf-map').forEach((el) => (el.style.aspectRatio = String(ar)));
-        await Promise.all([this.field('IVTE'), this.mask('IVTE'), this.termData('IVTE', 'pe'), this.loadBars()]);
+        await Promise.all([this.field('IVTE'), this.mask('IVTE'), this.loadBars()]);
         this.ready = true;
         this.status.textContent = '';
         this.bind();
