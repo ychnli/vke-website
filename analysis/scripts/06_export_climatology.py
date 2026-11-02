@@ -1,7 +1,7 @@
 """Write public/data/ar-frequency-2010-2019/ for the AR-frequency comparison figure.
 
 Usage:  python scripts/06_export_climatology.py
-Needs data/climatology/AR_frequency_climatology.nc (AR frequency from IVT, IVTE and IKEV).
+Needs data/climatology/AR_frequency_climatology_remove_tc.nc (AR frequency from IVT, IVTE and IKEV, TCs removed).
 """
 
 import json

@@ -4,7 +4,7 @@
 
 Frequency source: AR frequency climatologies (days/year, 2010-2019, MERRA-2) from detection with IVT,
 IVTE and IKEV, each with a threshold tuned to give a similar global AR frequency (Zhang et
-al. 2026, Fig. 1). The NetCDF has lat -90..90, lon -180..180 on the native 0.5 x 0.625 deg
+al. 2026, Fig. 1), with tropical cyclones removed (4 deg around IBTrACS tracks). The NetCDF has lat -90..90, lon -180..180 on the native 0.5 x 0.625 deg
 grid; the tropics (|lat| < 20) are excluded from detection and are zero.
 Display: Pacific-centred (lon 0..360), north up, cropped to DISPLAY_LAT. Fields are linear
 Uint8 up to VMAX (above every value in the file), gzip'd. Difference maps are computed in
@@ -24,7 +24,7 @@ import xarray as xr
 from . import config as C, geo
 from .export import PUBLIC, _write
 
-SOURCE = C.DATA / "climatology" / "AR_frequency_climatology.nc"
+SOURCE = C.DATA / "climatology" / "AR_frequency_climatology_remove_tc.nc"
 CASE = "ar-frequency-2010-2019"
 DISPLAY_LAT = (-75.0, 75.0)  # beyond this every map is < 10 days/year
 LON_LEFT = 0.0               # map runs 0E .. 360E, centred on the date line
@@ -34,7 +34,7 @@ DIFF_MAX = 20.0              # difference maps (IVTE or IKEV minus IVT): +-DIFF_
                              # 99th percentile of |difference| for both metrics
 FIELDS = {"IVT": "ivt", "IVTE": "vte", "IKEV": "kev"}  # display name -> NetCDF variable
 
-MASK_SOURCE = C.DATA / "masks" / "AR_masks_2010_01.nc"
+MASK_SOURCE = C.DATA / "masks" / "AR_masks_2010_01_remove_tc.nc"
 MASK_CASE = "ar-masks-2010-01"
 MASK_BITS = {"IVT": 0, "IVTE": 1, "IKEV": 2}
 MASK_FPS = 8

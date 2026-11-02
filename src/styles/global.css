@@ -8,7 +8,10 @@
   --measure: 46rem;
   --avail: 100vw;      /* viewport width available to the page column */
   --serif: 'STIX Two Text Variable', 'STIX Two Text', Georgia, 'Times New Roman', serif;
-  --sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --inter: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --sans: var(--inter);
+  /* Trial: serif everywhere except buttons (see "Buttons" below). Delete this line to restore Inter. */
+  --sans: var(--serif);
 
   /* ===== Budget-term colors: the ONLY place these are set. =====
      Each kind is used as \term{kind}{…} / \tc{kind}{…} in equations,
@@ -55,6 +58,11 @@ a { color: var(--accent); text-underline-offset: 0.15em; }
 .prose h2, .prose h3 { scroll-margin-top: 1rem; }
 .prose h3 { font-size: 1.2rem; margin-top: 2rem; }
 .prose img, .prose video { max-width: 100%; height: auto; }
+
+/* ---------- Buttons: always Inter ----------
+   Part of the serif trial in :root. !important because the figure components reset
+   their buttons with `font: inherit` in scoped styles, which outrank a plain `button`. */
+button { font-family: var(--inter) !important; }
 
 /* ---------- Sans-serif UI text: captions, navigation, controls, figure labels ---------- */
 .toc, .figure figcaption, .term-picker, .site-footer, .hero .papers, .derivation > summary,
@@ -145,6 +153,28 @@ a { color: var(--accent); text-underline-offset: 0.15em; }
 .figure figcaption .label { font-weight: 600; color: var(--text); }
 .figure figcaption > p { margin: 0.25rem 0 0; }
 .figure figcaption > p:first-of-type { display: inline; }
+
+/* ---------- IVT vs IVTE formulas, side by side ----------
+   Two columns whose rows line up (subgrid): title, three steps, citation.
+   On narrow screens the columns stack. */
+.formula-compare {
+  display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(8, auto);
+  border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+}
+.fc-col { display: grid; grid-row: span 8; grid-template-rows: subgrid; padding: 0.9rem 1.1rem 0.8rem; min-width: 0; }
+.fc-new { background: var(--surface); border-left: 1px solid var(--border); }
+.fc-title, .fc-step, .fc-cite { font-family: var(--sans); margin: 0; }
+.formula-compare .fc-title { font-size: 1.05rem; line-height: 1.25; margin: 0 0 0.25rem; }
+.fc-step { align-self: end; margin-top: 0.6rem; font-size: 0.85rem; color: var(--muted); }
+.fc-step strong { color: var(--text); }
+.fc-col .katex-display { margin: 0.2rem 0 0; text-align: left; }
+.fc-col .katex-display > .katex { text-align: left; }
+.fc-cite { align-self: end; margin-top: 0.75rem; text-align: right; font-size: 0.8rem; color: var(--muted); }
+@media (max-width: 760px) {
+  .formula-compare { grid-template-columns: 1fr; grid-template-rows: none; }
+  .fc-col { grid-row: auto; grid-template-rows: none; }
+  .fc-new { border-left: 0; border-top: 1px solid var(--border); }
+}
 
 /* ---------- Callout ---------- */
 .callout {

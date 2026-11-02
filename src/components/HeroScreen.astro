@@ -1,0 +1,16 @@
+---
+// Title block + hero figure, filling the first screen: the TL;DR starts below the fold.
+//   <HeroScreen> <header class="hero">…</header> <LandfallFigure …/> </HeroScreen>
+// On screens too short for the whole hero, it simply takes its natural height.
+---
+
+<div class="hero-screen">
+  <slot />
+</div>
+
+<style>
+  .hero-screen {
+    min-height: 100vh; min-height: 100svh;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+</style>

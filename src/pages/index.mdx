@@ -8,12 +8,15 @@ import Derivation from '../components/Derivation.astro';
 import Term from '../components/Term.astro';
 import TermPanels from '../components/TermPanels.astro';
 import LandfallFigure from '../components/LandfallFigure.astro';
+import HeroScreen from '../components/HeroScreen.astro';
 import FrequencyCompare from '../components/FrequencyCompare.astro';
 import MaskAnimation from '../components/MaskAnimation.astro';
 import DatasetRepr from '../components/DatasetRepr.astro';
 import kevBudgetRepr from '../data/kev_budget_repr.html?raw';
 
 <Base title={frontmatter.title}>
+
+<HeroScreen>
 
 <header class="hero">
   <h1>Atmospheric rivers through the lens of vapor kinetic energy</h1>
@@ -25,8 +28,10 @@ import kevBudgetRepr from '../data/kev_budget_repr.html?raw';
 </header>
 
 <LandfallFigure size={0.9}>
-  An atmospheric river making landfall on the US West Coast, 3–5 January 2023 (MERRA-2, 3-hourly means). **Left:** the AR detected from vapor transport energy (IVTE) or the kinetic energy of vapor (IKEV); light contours show the metric itself. Shading shows either the metric ("Value") or the selected term of its budget. **Right:** how much each budget term contributes to the AR's growth or decay (top) and to its movement (bottom), following Zhang et al. (2026) [[2]](#ref-2). Of the source terms, only condensation (net of re-evaporation) and turbulence are shown; smaller terms are omitted here. The residual is mainly due to the offline calculation of dynamics tendencies.
+  An atmospheric river making landfall on the US West Coast, 3–5 January 2023 (MERRA-2, 3-hourly means). **Left:** the AR detected from vapor transport energy (IVTE) or the kinetic energy of vapor (IKEV); light contours show the metric itself. Shading shows either the metric ("Value") or the selected term of its budget. **Right:** how much each budget term contributes to the AR's growth or decay (top) and to its movement (bottom), following Zhang et al. (2026) [[2]](#ref-2). Of the source terms, only condensation and turbulence are shown; smaller terms are omitted here. The residual (not explicitly shown) is mainly due to the offline calculation of dynamics tendencies.
 </LandfallFigure>
+
+</HeroScreen>
 
 <div class="tldr">
   <strong>TL;DR:</strong> Integrated vapor transport (IVT) is the standard tool for detecting atmospheric rivers, but it has no clean budget equation. The <mark class="k-tend">**vapor kinetic energy**</mark> (VKE) framework uses two related quantities that detect the same atmospheric rivers and come with simple budget equations, allowing us to study their evolution. We show that atmospheric rivers <mark class="k-pe">grow by converting potential to kinetic energy</mark>, decay through <mark class="k-cond">condensation</mark> and <mark class="k-fric">sub-grid momentum sinks</mark>, and <mark class="k-hflux">move by horizontal flux convergence</mark>.
@@ -86,7 +91,60 @@ $$
 \end{aligned}
 $$
 
-Unlike IVT, IKEV and IVTE take the (squared) norm of the winds before taking the vertical integral. This allows us to derive a clean budget equation from the budget equations of momentum and water vapor. 
+The difference between the calculation for IVT and IVTE is illustrated below:
+
+<div class="figure wide formula-compare" style="--fig-scale: 0.9" role="group" aria-label="IVT and IVTE formulas side by side">
+<div class="fc-col">
+
+<h3 class="fc-title">Integrated vapor transport (IVT)</h3>
+
+<p class="fc-step">Start with the vapor transport vector</p>
+
+$$
+q\mathbf{u} = (qu,\ qv)
+$$
+
+<p class="fc-step">Integrate each component over the column</p>
+
+$$
+\mathbf{IVT} = \left(-\frac{1}{g}\int_{p_s}^{p_t} qu\,dp,\ -\frac{1}{g}\int_{p_s}^{p_t} qv\,dp\right)
+$$
+
+<p class="fc-step">Take the norm <strong>last</strong></p>
+
+$$
+\mathrm{IVT} = \sqrt{\left(-\frac{1}{g}\int_{p_s}^{p_t} qu\,dp\right)^{2} + \left(-\frac{1}{g}\int_{p_s}^{p_t} qv\,dp\right)^{2}}
+$$
+
+<p class="fc-cite">Zhu &amp; Newell (1998) [[5]](#ref-5)</p>
+
+</div>
+<div class="fc-col fc-new">
+
+<h3 class="fc-title">Integrated vapor transport energy (IVTE)</h3>
+
+<p class="fc-step">Start with the vapor transport vector</p>
+
+$$
+q\mathbf{u} = (qu,\ qv)
+$$
+
+<p class="fc-step">Take the (squared) norm <strong>first</strong>, at each level</p>
+
+$$
+\mathrm{VTE} = q^2 \frac{u^2 + v^2}{2} = \frac{1}{2}\,|q\mathbf{u}|^2
+$$
+
+<p class="fc-step">Integrate over the column</p>
+
+$$
+\mathrm{IVTE} = -\frac{1}{g}\int_{p_s}^{p_t} q^2 \frac{u^2+v^2}{2} \,dp
+$$
+
+<p class="fc-cite">Ong &amp; Yang (2024) [[1]](#ref-1)</p>
+
+</div>
+</div>
 
 ## Detected ARs are similar to those from IVT
 
@@ -115,14 +173,16 @@ $$
 
 The IVT threshold is the usual TempestExtremes value. The IKEV and IVTE thresholds are chosen to approximately match the global AR frequency of the IVT detection.
 
+Tropical cyclones are excluded from the detections with a 4 degree mask surrounding the IBTrACS best track.
+
 </Derivation>
 
 <FrequencyCompare size={0.9}>
-  Mean AR frequency over 2010–2019 (MERRA-2), detected from IVT (left) and from IVTE or IKEV (right). **Difference** shows IVTE (or IKEV) minus IVT. The tropics (within 20° of the equator) are excluded from detection. After Zhang et al. (2026), Fig. 1 [[2]](#ref-2).
+  Mean AR frequency over 2010–2019 (MERRA-2), detected from IVT (left) and from IVTE or IKEV (right). **Difference** shows IVTE (or IKEV) minus IVT. The tropics (within 20° of the equator) are excluded from detection, and tropical cyclones (within 4° of IBTrACS tracks) are removed. After Zhang et al. (2026), Fig. 1 [[2]](#ref-2).
 </FrequencyCompare>
 
 <MaskAnimation size={0.9}>
-  ARs detected every 3 hours through January 2010 (MERRA-2), outlined in black when detected from IVT, in blue from IVTE and in red from IKEV. Note that tropical cyclones are not filtered out here.
+  ARs detected every 3 hours through January 2010 (MERRA-2), outlined in black when detected from IVT, in blue from IVTE and in red from IKEV. Tropical cyclones (within 4° of IBTrACS tracks) are removed.
 </MaskAnimation>
 
 ## The budget equations
@@ -278,7 +338,7 @@ and $\mathbf{F}$ combines turbulence, gravity-wave drag and convection. There is
 
 We are developing an open-source Python package for these diagnostics, [vke-budgets](https://github.com/ychnli/vke-budgets). It takes the winds, humidity, geopotential and surface pressure from a reanalysis product or model output and computes every term of the column-integrated KEV and VTE budgets on its grid. It currently reads MERRA-2, whose physics tendencies give the vapor and sub-grid momentum sources/sinks directly. Support for ERA5 is forthcoming.
 
-For example, the KEV budget of one day of MERRA-2 over the northeast Pacific:
+For example, the KEV budget of one day of MERRA-2:
 
 ```python
 from vke_budgets import budget

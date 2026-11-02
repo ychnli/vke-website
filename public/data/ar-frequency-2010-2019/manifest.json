@@ -16,21 +16,21 @@
    "file": "ivt.bin.gz",
    "encoding": "u8-linear",
    "vmax": 150.0,
-   "globalMean": 16.78,
+   "globalMean": 16.58,
    "threshold": -40000
   },
   "IVTE": {
    "file": "ivte.bin.gz",
    "encoding": "u8-linear",
    "vmax": 150.0,
-   "globalMean": 17.23,
+   "globalMean": 17.02,
    "threshold": -2000
   },
   "IKEV": {
    "file": "ikev.bin.gz",
    "encoding": "u8-linear",
    "vmax": 150.0,
-   "globalMean": 15.73,
+   "globalMean": 15.56,
    "threshold": -460000
   }
  }

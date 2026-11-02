@@ -1,7 +1,7 @@
 """Write public/data/ar-masks-2010-01/ for the AR-mask animation.
 
 Usage:  python scripts/07_export_masks.py
-Needs data/masks/AR_masks_2010_01.nc (3-hourly AR masks from IVT, IVTE and IKEV).
+Needs data/masks/AR_masks_2010_01_remove_tc.nc (3-hourly AR masks from IVT, IVTE and IKEV, TCs removed).
 """
 
 import json
